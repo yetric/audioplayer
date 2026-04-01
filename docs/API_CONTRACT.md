@@ -32,8 +32,20 @@ Primary exported types:
 - `AudioPlayerRuntimeError`
 - `AudioPlayerEventMap`
 - `AudioPlayer`
+- `PersistedPlayerState`
+- `AudioPlayerPersistenceAdapter`
+- `AudioPlayerPersistenceOptions`
+- `AudioPlayerPersistenceController`
 
 ## Command Semantics
+
+### Persistence
+
+- Persistence is opt-in through `attachAudioPlayerPersistence(...)`
+- The first built-in adapter is `createLocalStoragePersistenceAdapter(key)`
+- Restore must not auto-play by itself
+- Persistence saves plain-data only
+- Persistence should save on pause, ended, source change, queue change, rate/volume changes, and periodically while playing
 
 ### `load(source)`
 
@@ -170,6 +182,7 @@ Explicitly in scope for `beta.1`:
 - built-in queue
 - repeat modes
 - ended-state preservation
+- opt-in persistence with `localStorage`
 - React provider integration later
 
 Explicitly not required for `Issue 001`:

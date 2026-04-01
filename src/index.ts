@@ -119,6 +119,45 @@ export interface PreviousOptions {
   restartThresholdSeconds?: number;
 }
 
+export interface PersistedPlayerState {
+  version: 1;
+  savedAt: number;
+  currentSource: AudioSource | null;
+  currentSourceId: string | null;
+  currentTime: number;
+  rate: number;
+  volume: number;
+  muted: boolean;
+  queue: {
+    items: AudioSource[];
+    position: {
+      currentIndex: number;
+      currentSourceId: string | null;
+      repeatMode: RepeatMode;
+    };
+  };
+}
+
+export interface AudioPlayerPersistenceAdapter {
+  load(): PersistedPlayerState | null;
+  save(state: PersistedPlayerState): void;
+  clear(): void;
+}
+
+export interface AudioPlayerPersistenceOptions {
+  adapter: AudioPlayerPersistenceAdapter;
+  autoRestore?: boolean;
+  maxAgeMs?: number;
+  saveIntervalMs?: number;
+}
+
+export interface AudioPlayerPersistenceController {
+  restore(): Promise<PersistedPlayerState | null>;
+  save(): void;
+  clear(): void;
+  destroy(): void;
+}
+
 export type AudioPlayerEventListener<K extends AudioPlayerEventName> = (
   event: AudioPlayerEventMap[K],
 ) => void;
@@ -152,6 +191,8 @@ export interface AudioPlayer {
 }
 
 const DEFAULT_PREVIOUS_RESTART_THRESHOLD_SECONDS = 5;
+const DEFAULT_PERSISTENCE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const DEFAULT_PERSISTENCE_SAVE_INTERVAL_MS = 5000;
 
 const createInitialState = (
   options: CreateAudioPlayerOptions,
@@ -275,6 +316,86 @@ const createAudioElement = (): HTMLAudioElement | null => {
 
   return new Audio();
 };
+
+const isBrowserStorageAvailable = (): boolean =>
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+const isPersistedPlayerState = (value: unknown): value is PersistedPlayerState => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<PersistedPlayerState>;
+  return (
+    candidate.version === 1 &&
+    typeof candidate.savedAt === "number" &&
+    "currentSource" in candidate &&
+    typeof candidate.currentTime === "number" &&
+    typeof candidate.rate === "number" &&
+    typeof candidate.volume === "number" &&
+    typeof candidate.muted === "boolean" &&
+    !!candidate.queue &&
+    Array.isArray(candidate.queue.items) &&
+    !!candidate.queue.position
+  );
+};
+
+const toPersistedPlayerState = (state: AudioPlayerState): PersistedPlayerState => ({
+  version: 1,
+  savedAt: Date.now(),
+  currentSource: state.currentSource,
+  currentSourceId: state.currentSourceId,
+  currentTime: state.currentTime,
+  rate: state.rate,
+  volume: state.volume,
+  muted: state.muted,
+  queue: {
+    items: [...state.queue.items],
+    position: {
+      currentIndex: state.queue.position.currentIndex,
+      currentSourceId: state.queue.position.currentSourceId,
+      repeatMode: state.queue.position.repeatMode,
+    },
+  },
+});
+
+export const createLocalStoragePersistenceAdapter = (
+  key: string,
+): AudioPlayerPersistenceAdapter => ({
+  load() {
+    if (!isBrowserStorageAvailable()) {
+      return null;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed: unknown = JSON.parse(raw);
+      return isPersistedPlayerState(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  },
+
+  save(state) {
+    if (!isBrowserStorageAvailable()) {
+      return;
+    }
+
+    window.localStorage.setItem(key, JSON.stringify(state));
+  },
+
+  clear() {
+    if (!isBrowserStorageAvailable()) {
+      return;
+    }
+
+    window.localStorage.removeItem(key);
+  },
+});
 
 export const createAudioPlayer = (
   options: CreateAudioPlayerOptions = {},
@@ -1029,6 +1150,184 @@ export const createAudioPlayer = (
       subscribers.clear();
       for (const eventName of Object.keys(eventListeners) as AudioPlayerEventName[]) {
         eventListeners[eventName].clear();
+      }
+    },
+  };
+};
+
+export const attachAudioPlayerPersistence = (
+  player: AudioPlayer,
+  options: AudioPlayerPersistenceOptions,
+): AudioPlayerPersistenceController => {
+  const maxAgeMs = options.maxAgeMs ?? DEFAULT_PERSISTENCE_MAX_AGE_MS;
+  const saveIntervalMs =
+    options.saveIntervalMs ?? DEFAULT_PERSISTENCE_SAVE_INTERVAL_MS;
+  let destroyed = false;
+  let playIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  const save = (): void => {
+    if (destroyed) {
+      return;
+    }
+
+    const state = player.getState();
+    if (!state.currentSource) {
+      options.adapter.clear();
+      return;
+    }
+
+    options.adapter.save(toPersistedPlayerState(state));
+  };
+
+  const clear = (): void => {
+    options.adapter.clear();
+  };
+
+  const stopPlayInterval = (): void => {
+    if (playIntervalId !== null) {
+      clearInterval(playIntervalId);
+      playIntervalId = null;
+    }
+  };
+
+  const startPlayInterval = (): void => {
+    if (playIntervalId !== null) {
+      return;
+    }
+
+    playIntervalId = setInterval(() => {
+      save();
+    }, saveIntervalMs);
+  };
+
+  const waitForRestoredSource = (sourceId: string): Promise<void> =>
+    new Promise((resolve) => {
+      const unsubscribe = player.subscribe((state) => {
+        if (state.currentSourceId !== sourceId) {
+          return;
+        }
+
+        if (state.status === "loading") {
+          return;
+        }
+
+        unsubscribe();
+        resolve();
+      });
+    });
+
+  const restore = async (): Promise<PersistedPlayerState | null> => {
+    const persisted = options.adapter.load();
+    if (!persisted) {
+      return null;
+    }
+
+    if (Date.now() - persisted.savedAt > maxAgeMs) {
+      options.adapter.clear();
+      return null;
+    }
+
+    player.setRepeatMode(persisted.queue.position.repeatMode);
+    player.setVolume(persisted.volume);
+    player.setMuted(persisted.muted);
+    player.setRate(persisted.rate);
+
+    if (persisted.queue.items.length > 0) {
+      await player.setQueue(persisted.queue.items, {
+        startAtId: persisted.queue.position.currentSourceId ?? undefined,
+      });
+    } else if (persisted.currentSource) {
+      await player.load(persisted.currentSource);
+    } else {
+      return persisted;
+    }
+
+    if (persisted.currentSourceId) {
+      await waitForRestoredSource(persisted.currentSourceId);
+    }
+
+    if (persisted.currentTime > 0) {
+      player.seek(persisted.currentTime);
+    }
+
+    return persisted;
+  };
+
+  const stateUnsubscribe = player.subscribe((state) => {
+    if (state.status === "playing") {
+      startPlayInterval();
+      return;
+    }
+
+    stopPlayInterval();
+  });
+
+  const pauseUnsubscribe = player.on("pause", () => {
+    save();
+  });
+  const endedUnsubscribe = player.on("ended", () => {
+    save();
+  });
+  const sourceUnsubscribe = player.on("sourcechange", () => {
+    save();
+  });
+  const queueUnsubscribe = player.on("queuechange", () => {
+    save();
+  });
+  const rateUnsubscribe = player.on("ratechange", () => {
+    save();
+  });
+  const volumeUnsubscribe = player.on("volumechange", () => {
+    save();
+  });
+
+  const beforeUnloadHandler = (): void => {
+    save();
+  };
+
+  const visibilityHandler = (): void => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    if (document.visibilityState === "hidden") {
+      save();
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("beforeunload", beforeUnloadHandler);
+  }
+
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", visibilityHandler);
+  }
+
+  if (options.autoRestore !== false) {
+    void restore();
+  }
+
+  return {
+    restore,
+    save,
+    clear,
+    destroy() {
+      destroyed = true;
+      stopPlayInterval();
+      stateUnsubscribe();
+      pauseUnsubscribe();
+      endedUnsubscribe();
+      sourceUnsubscribe();
+      queueUnsubscribe();
+      rateUnsubscribe();
+      volumeUnsubscribe();
+
+      if (typeof window !== "undefined") {
+        window.removeEventListener("beforeunload", beforeUnloadHandler);
+      }
+
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", visibilityHandler);
       }
     },
   };

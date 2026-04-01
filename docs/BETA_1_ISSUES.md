@@ -65,8 +65,11 @@ Priority is based on one question only: does this unblock replacing the current 
   - restore last episode, time, rate, volume, queue index
 - Done when:
   - persistence is opt-in, not implicit
+  - a `localStorage` adapter exists
   - persisted state expires
   - restore never auto-plays without an explicit user action
+  - restore reapplies queue, repeat mode, volume, mute, rate, and seek position
+  - save happens on pause, end, queue/source changes, and on an interval during playback
   - storage adapter is `localStorage` first and swappable later
 
 ### Issue 006: Progress reporting hooks
