@@ -28,10 +28,16 @@
   "files": [
     "dist"
   ],
+  "workspaces": [
+    "website"
+  ],
   "scripts": {
     "build": "tsup",
     "check": "tsc --noEmit",
     "dev": "tsup --watch",
+    "docs:start": "npm run start --workspace website",
+    "docs:build": "npm run build --workspace website",
+    "docs:serve": "npm run serve --workspace website",
     "prepack": "npm run build",
     "test": "vitest run"
   },
