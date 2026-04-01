@@ -41,6 +41,9 @@ Primary exported types:
 - `AudioPlayerProgressReporterController`
 - `AudioPlayerMediaSessionOptions`
 - `AudioPlayerMediaSessionController`
+- `AudioPlayerProvider`
+- `useAudioPlayer`
+- `useAudioPlayerState`
 
 ## Command Semantics
 
@@ -66,6 +69,14 @@ Primary exported types:
 - Metadata should come from the current `AudioSource`
 - Play, pause, seek backward, seek forward, previous track, next track, seek to, and stop should be wired when supported
 - Playback state and position state should stay in sync while the player changes
+
+### React Adapter
+
+- React integration lives at `@yetric/audioplayer/react`
+- `AudioPlayerProvider` is the primary app-level integration
+- The provider owns a singleton player unless a caller supplies an existing player instance
+- `useAudioPlayer()` exposes the underlying imperative player
+- `useAudioPlayerState()` exposes subscribed player state without adding a separate React-owned playback model
 
 ### `load(source)`
 

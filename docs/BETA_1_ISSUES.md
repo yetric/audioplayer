@@ -110,9 +110,11 @@ Priority is based on one question only: does this unblock replacing the current 
 - Scope:
   - `AudioPlayerProvider` as the primary app-level integration
   - `useAudioPlayer` hook on top of the provider
+  - `useAudioPlayerState` for subscribed state consumption
   - no React-owned playback engine
 - Done when:
   - `podcast-app` can integrate with a small wrapper layer
+  - the React entrypoint is exported separately from the core package
   - React API does not diverge from the core mental model
 
 ### Issue 010: Examples and migration guide for `podcast-app`
