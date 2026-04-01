@@ -39,6 +39,9 @@ Priority is based on one question only: does this unblock replacing the current 
 - Goal: expose one normalized state object suitable for React, Angular, and persistence.
 - Done when:
   - state includes status, current source, current time, duration, buffered, rate, volume, muted, queue position, and error
+  - state is plain-data and does not leak DOM objects or runtime-only error causes
+  - derived progress information is available without reading the underlying audio element
+  - queue position is normalized enough for adapters and persistence to consume directly
   - state can be consumed without direct DOM access
 
 ### Issue 004: Add queue, next/previous, and auto-advance

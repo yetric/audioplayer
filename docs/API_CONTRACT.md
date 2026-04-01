@@ -25,8 +25,11 @@ Primary exported types:
 
 - `AudioSource`
 - `AudioPlayerState`
+- `AudioPlayerProgressState`
 - `AudioPlayerQueueState`
-- `AudioPlayerError`
+- `AudioPlayerQueuePositionState`
+- `AudioPlayerErrorState`
+- `AudioPlayerRuntimeError`
 - `AudioPlayerEventMap`
 - `AudioPlayer`
 
@@ -98,6 +101,13 @@ Primary exported types:
 
 ## State Semantics
 
+The exported player state is intended to be plain-data and serializable:
+
+- no DOM nodes
+- no functions
+- no runtime-only error causes in the state snapshot
+- enough derived data that UI consumers do not need to inspect `HTMLAudioElement`
+
 ### `status`
 
 - `idle`: no active source
@@ -111,7 +121,19 @@ Primary exported types:
 ### `queue`
 
 - Queue state is always present, even when empty
-- `currentIndex = -1` means no active queued item
+- `queue.position.currentIndex = -1` means no active queued item
+- `queue.itemIds` exists so consumers can compare queue identity without walking full item payloads
+
+### `progress`
+
+- `progress.currentTime`, `progress.duration`, and `progress.buffered` mirror the flat playback values
+- `progress.playedFraction` and `progress.bufferedFraction` are normalized `0..1`
+- UI consumers should not need direct DOM access to render sliders or progress bars
+
+### `error`
+
+- `state.error` is intentionally serializable and contains only `code` and `message`
+- runtime-only details such as original thrown values stay in the `error` event payload, not the state snapshot
 
 ## Event Semantics
 

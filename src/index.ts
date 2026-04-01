@@ -33,7 +33,7 @@ export interface AudioSource {
   durationHint?: number;
 }
 
-export interface AudioPlayerError {
+export interface AudioPlayerErrorState {
   code:
     | "LOAD_ERROR"
     | "PLAY_ERROR"
@@ -44,28 +44,48 @@ export interface AudioPlayerError {
     | "NO_ACTIVE_SOURCE"
     | "UNKNOWN_ERROR";
   message: string;
+}
+
+export interface AudioPlayerRuntimeError extends AudioPlayerErrorState {
   cause?: unknown;
+}
+
+export interface AudioPlayerProgressState {
+  currentTime: number;
+  duration: number;
+  buffered: number;
+  playedFraction: number;
+  bufferedFraction: number;
+}
+
+export interface AudioPlayerQueuePositionState {
+  currentIndex: number;
+  currentSourceId: string | null;
+  length: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  repeatMode: RepeatMode;
 }
 
 export interface AudioPlayerQueueState {
   items: AudioSource[];
-  currentIndex: number;
-  repeatMode: RepeatMode;
-  hasNext: boolean;
-  hasPrevious: boolean;
+  itemIds: string[];
+  position: AudioPlayerQueuePositionState;
 }
 
 export interface AudioPlayerState {
   status: PlayerStatus;
   currentSource: AudioSource | null;
+  currentSourceId: string | null;
   currentTime: number;
   duration: number;
   buffered: number;
+  progress: AudioPlayerProgressState;
   rate: number;
   volume: number;
   muted: boolean;
   queue: AudioPlayerQueueState;
-  error: AudioPlayerError | null;
+  error: AudioPlayerErrorState | null;
 }
 
 export interface AudioPlayerEventMap {
@@ -79,7 +99,7 @@ export interface AudioPlayerEventMap {
   ratechange: { rate: number; state: AudioPlayerState };
   volumechange: { volume: number; muted: boolean; state: AudioPlayerState };
   ended: { source: AudioSource | null; state: AudioPlayerState };
-  error: { error: AudioPlayerError; state: AudioPlayerState };
+  error: { error: AudioPlayerRuntimeError; state: AudioPlayerState };
   destroy: { state: AudioPlayerState };
 }
 
@@ -138,27 +158,40 @@ const createInitialState = (
 ): AudioPlayerState => ({
   status: "idle",
   currentSource: null,
+  currentSourceId: null,
   currentTime: 0,
   duration: 0,
   buffered: 0,
+  progress: {
+    currentTime: 0,
+    duration: 0,
+    buffered: 0,
+    playedFraction: 0,
+    bufferedFraction: 0,
+  },
   rate: options.initialRate ?? 1,
   volume: options.initialVolume ?? 1,
   muted: options.initialMuted ?? false,
   queue: {
     items: [],
-    currentIndex: -1,
-    repeatMode: options.initialRepeatMode ?? "off",
-    hasNext: false,
-    hasPrevious: false,
+    itemIds: [],
+    position: {
+      currentIndex: -1,
+      currentSourceId: null,
+      length: 0,
+      repeatMode: options.initialRepeatMode ?? "off",
+      hasNext: false,
+      hasPrevious: false,
+    },
   },
   error: null,
 });
 
 const createPlayerError = (
-  code: AudioPlayerError["code"],
+  code: AudioPlayerRuntimeError["code"],
   message: string,
   cause?: unknown,
-): AudioPlayerError => ({
+): AudioPlayerRuntimeError => ({
   code,
   message,
   cause,
@@ -195,14 +228,15 @@ const safeBuffered = (audio: HTMLAudioElement | null): number => {
 
 const cloneQueueState = (state: AudioPlayerState): AudioPlayerQueueState => ({
   items: [...state.queue.items],
-  currentIndex: state.queue.currentIndex,
-  repeatMode: state.queue.repeatMode,
-  hasNext: state.queue.hasNext,
-  hasPrevious: state.queue.hasPrevious,
+  itemIds: [...state.queue.itemIds],
+  position: {
+    ...state.queue.position,
+  },
 });
 
 const updateQueueFlags = (state: AudioPlayerState): AudioPlayerState => {
-  const { items, currentIndex, repeatMode } = state.queue;
+  const { items, position } = state.queue;
+  const { currentIndex, repeatMode } = position;
   const lastIndex = items.length - 1;
   const hasItems = items.length > 0;
   const hasNext =
@@ -222,8 +256,14 @@ const updateQueueFlags = (state: AudioPlayerState): AudioPlayerState => {
     ...state,
     queue: {
       ...state.queue,
-      hasNext,
-      hasPrevious,
+      itemIds: items.map((item) => item.id),
+      position: {
+        ...position,
+        currentSourceId: state.currentSource?.id ?? null,
+        length: items.length,
+        hasNext,
+        hasPrevious,
+      },
     },
   };
 };
@@ -288,12 +328,15 @@ export const createAudioPlayer = (
     return state;
   };
 
-  const setError = (error: AudioPlayerError): void => {
+  const setError = (error: AudioPlayerRuntimeError): void => {
     shouldAutoplayAfterLoad = false;
     const nextState = setState((currentState) => ({
       ...currentState,
       status: "error",
-      error,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
     }));
     emit("error", { error, state: nextState });
   };
@@ -312,11 +355,27 @@ export const createAudioPlayer = (
   const syncAudioSnapshot = (
     statusOverride?: PlayerStatus,
   ): AudioPlayerState => {
+    const currentTime = audio?.currentTime ?? state.currentTime;
+    const duration = safeDuration(audio, state.currentSource?.durationHint);
+    const buffered = safeBuffered(audio);
+    const playedFraction =
+      duration > 0 ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
+    const bufferedFraction =
+      duration > 0 ? Math.min(1, Math.max(0, buffered / duration)) : 0;
+
     const nextState = setState((currentState) => ({
       ...currentState,
-      currentTime: audio?.currentTime ?? currentState.currentTime,
-      duration: safeDuration(audio, currentState.currentSource?.durationHint),
-      buffered: safeBuffered(audio),
+      currentSourceId: currentState.currentSource?.id ?? null,
+      currentTime,
+      duration,
+      buffered,
+      progress: {
+        currentTime,
+        duration,
+        buffered,
+        playedFraction,
+        bufferedFraction,
+      },
       rate: audio?.playbackRate ?? currentState.rate,
       volume: audio?.volume ?? currentState.volume,
       muted: audio?.muted ?? currentState.muted,
@@ -338,14 +397,26 @@ export const createAudioPlayer = (
     const nextState = setState((currentState) => ({
       ...currentState,
       currentSource: source,
+      currentSourceId: source?.id ?? null,
       currentTime: 0,
       duration: source?.durationHint ?? 0,
       buffered: 0,
+      progress: {
+        currentTime: 0,
+        duration: source?.durationHint ?? 0,
+        buffered: 0,
+        playedFraction: 0,
+        bufferedFraction: 0,
+      },
       status: nextStatus,
       error: null,
       queue: {
         ...currentState.queue,
-        currentIndex: queueIndex,
+        position: {
+          ...currentState.queue.position,
+          currentIndex: queueIndex,
+          currentSourceId: source?.id ?? null,
+        },
       },
     }));
     emit("sourcechange", { source, state: nextState });
@@ -361,7 +432,10 @@ export const createAudioPlayer = (
       queue: {
         ...currentState.queue,
         items,
-        currentIndex,
+        position: {
+          ...currentState.queue.position,
+          currentIndex,
+        },
       },
     }));
 
@@ -415,7 +489,8 @@ export const createAudioPlayer = (
       return;
     }
 
-    const { items, currentIndex, repeatMode } = state.queue;
+    const { items, position } = state.queue;
+    const { currentIndex, repeatMode } = position;
     if (items.length > 0 && currentIndex >= 0) {
       let nextIndex = currentIndex;
 
@@ -584,7 +659,7 @@ export const createAudioPlayer = (
       } catch (cause) {
         setError(
           cause && typeof cause === "object" && "code" in cause
-            ? (cause as AudioPlayerError)
+            ? (cause as AudioPlayerRuntimeError)
             : createPlayerError("LOAD_ERROR", "Failed to load source.", cause),
         );
       }
@@ -729,15 +804,28 @@ export const createAudioPlayer = (
         const nextState = setState((currentState) => ({
           ...currentState,
           currentSource: startIndex >= 0 ? items[startIndex] ?? null : null,
+          currentSourceId: startIndex >= 0 ? (items[startIndex]?.id ?? null) : null,
           currentTime: 0,
           duration: startIndex >= 0 ? (items[startIndex]?.durationHint ?? 0) : 0,
           buffered: 0,
+          progress: {
+            currentTime: 0,
+            duration: startIndex >= 0 ? (items[startIndex]?.durationHint ?? 0) : 0,
+            buffered: 0,
+            playedFraction: 0,
+            bufferedFraction: 0,
+          },
           status: startIndex >= 0 ? "ready" : "idle",
           error: null,
           queue: {
             ...currentState.queue,
             items: [...items],
-            currentIndex: startIndex,
+            position: {
+              ...currentState.queue.position,
+              currentIndex: startIndex,
+              currentSourceId:
+                startIndex >= 0 ? (items[startIndex]?.id ?? null) : null,
+            },
           },
         }));
 
@@ -765,7 +853,7 @@ export const createAudioPlayer = (
       } catch (cause) {
         setError(
           cause && typeof cause === "object" && "code" in cause
-            ? (cause as AudioPlayerError)
+            ? (cause as AudioPlayerRuntimeError)
             : createPlayerError("INVALID_QUEUE_ITEM", "Failed to set queue.", cause),
         );
       }
@@ -788,7 +876,7 @@ export const createAudioPlayer = (
       } catch (cause) {
         setError(
           cause && typeof cause === "object" && "code" in cause
-            ? (cause as AudioPlayerError)
+            ? (cause as AudioPlayerRuntimeError)
             : createPlayerError("INVALID_QUEUE_ITEM", "Failed to append queue items.", cause),
         );
       }
@@ -805,7 +893,11 @@ export const createAudioPlayer = (
         queue: {
           ...currentState.queue,
           items: nextItems,
-          currentIndex: nextIndex,
+          position: {
+            ...currentState.queue.position,
+            currentIndex: nextIndex,
+            currentSourceId: nextIndex >= 0 ? (nextItems[nextIndex]?.id ?? null) : null,
+          },
         },
       }));
 
@@ -818,7 +910,11 @@ export const createAudioPlayer = (
         queue: {
           ...currentState.queue,
           items: [],
-          currentIndex: -1,
+          position: {
+            ...currentState.queue.position,
+            currentIndex: -1,
+            currentSourceId: null,
+          },
         },
       }));
 
@@ -826,7 +922,8 @@ export const createAudioPlayer = (
     },
 
     async next() {
-      const { items, currentIndex, repeatMode } = state.queue;
+      const { items, position } = state.queue;
+      const { currentIndex, repeatMode } = position;
       if (items.length === 0) {
         const endedState = syncAudioSnapshot("ended");
         emit("ended", { source: endedState.currentSource, state: endedState });
@@ -866,7 +963,8 @@ export const createAudioPlayer = (
         return;
       }
 
-      const { items, currentIndex, repeatMode } = state.queue;
+      const { items, position } = state.queue;
+      const { currentIndex, repeatMode } = position;
       if (items.length === 0 || currentIndex < 0) {
         this.seek(0);
         return;
@@ -893,7 +991,10 @@ export const createAudioPlayer = (
         ...currentState,
         queue: {
           ...currentState.queue,
-          repeatMode: mode,
+          position: {
+            ...currentState.queue.position,
+            repeatMode: mode,
+          },
         },
       }));
       emitQueueChange(nextState);
