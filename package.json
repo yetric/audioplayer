@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Headless TypeScript audio player library for modern browsers.",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,6 +17,12 @@
       "types": "./dist/react.d.ts",
       "import": "./dist/react.js",
       "require": "./dist/react.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "react": ["./dist/react.d.ts"]
     }
   },
   "files": [
@@ -25,6 +32,7 @@
     "build": "tsup",
     "check": "tsc --noEmit",
     "dev": "tsup --watch",
+    "prepack": "npm run build",
     "test": "vitest run"
   },
   "keywords": [
@@ -36,6 +44,17 @@
   ],
   "author": "Yetric AB",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yetric/audioplayer.git"
+  },
+  "homepage": "https://github.com/yetric/audioplayer#readme",
+  "bugs": {
+    "url": "https://github.com/yetric/audioplayer/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   },

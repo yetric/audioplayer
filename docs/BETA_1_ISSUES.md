@@ -142,6 +142,8 @@ Priority is based on one question only: does this unblock replacing the current 
   - ESM and CJS builds exist
   - type declarations are emitted
   - package exports are stable
+  - package metadata is suitable for public npm publishing
+  - a pack dry-run confirms the expected distributable contents
 
 ### Issue 013: Angular and Web Component integration docs
 
