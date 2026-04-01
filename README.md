@@ -76,3 +76,10 @@ The public API should stay small. Extra behavior like persistence, progress ping
 
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/BETA_1_ISSUES.md`](./docs/BETA_1_ISSUES.md)
+- [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
+- [`docs/MIGRATION_PODCAST_APP.md`](./docs/MIGRATION_PODCAST_APP.md)
+
+## Examples
+
+- [`examples/vanilla/index.html`](./examples/vanilla/index.html)
+- [`examples/react/App.tsx`](./examples/react/App.tsx)
