@@ -78,6 +78,8 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - [`docs/BETA_1_ISSUES.md`](./docs/BETA_1_ISSUES.md)
 - [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
 - [`docs/MIGRATION_PODCAST_APP.md`](./docs/MIGRATION_PODCAST_APP.md)
+- [`docs/ANGULAR_EXAMPLE.md`](./docs/ANGULAR_EXAMPLE.md)
+- [`docs/WEB_COMPONENT_EXAMPLE.md`](./docs/WEB_COMPONENT_EXAMPLE.md)
 
 ## Examples
 
