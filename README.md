@@ -77,6 +77,11 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/BETA_1_ISSUES.md`](./docs/BETA_1_ISSUES.md)
 - [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
+- [`docs/GETTING_STARTED.md`](./docs/GETTING_STARTED.md)
+- [`docs/CORE_GUIDE.md`](./docs/CORE_GUIDE.md)
+- [`docs/REACT_GUIDE.md`](./docs/REACT_GUIDE.md)
+- [`docs/INTEGRATIONS.md`](./docs/INTEGRATIONS.md)
+- [`docs/RECIPES.md`](./docs/RECIPES.md)
 - [`docs/MIGRATION_PODCAST_APP.md`](./docs/MIGRATION_PODCAST_APP.md)
 - [`docs/ANGULAR_EXAMPLE.md`](./docs/ANGULAR_EXAMPLE.md)
 - [`docs/WEB_COMPONENT_EXAMPLE.md`](./docs/WEB_COMPONENT_EXAMPLE.md)
@@ -84,4 +89,6 @@ The public API should stay small. Extra behavior like persistence, progress ping
 ## Examples
 
 - [`examples/vanilla/index.html`](./examples/vanilla/index.html)
+- [`examples/vanilla/playlist-demo.js`](./examples/vanilla/playlist-demo.js)
 - [`examples/react/App.tsx`](./examples/react/App.tsx)
+- [`examples/react/PodcastPlayerDemo.tsx`](./examples/react/PodcastPlayerDemo.tsx)
