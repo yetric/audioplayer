@@ -99,7 +99,9 @@ Priority is based on one question only: does this unblock replacing the current 
 - Goal: make loading and playback failures debuggable and recoverable.
 - Done when:
   - errors have typed codes
+  - unsupported environments surface a typed error
   - failed loads do not leave the player in a corrupt state
+  - successful operations clear stale error state
   - consumer can show useful UI from state alone
 
 ### Issue 009: React adapter for `podcast-app`

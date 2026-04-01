@@ -173,6 +173,15 @@ The exported player state is intended to be plain-data and serializable:
 
 - `state.error` is intentionally serializable and contains only `code` and `message`
 - runtime-only details such as original thrown values stay in the `error` event payload, not the state snapshot
+- successful operations clear stale `state.error`
+- unsupported environments should surface a typed `UNSUPPORTED_ENVIRONMENT` error instead of failing silently
+
+## Error Semantics
+
+- `state.error` is the user-facing, serializable failure snapshot
+- the `error` event payload may include richer runtime causes
+- failed operations should not corrupt queue structure or silently replace the active source
+- successful playback, metadata load, seek completion, rate changes, and volume changes should clear stale errors
 
 ## Event Semantics
 

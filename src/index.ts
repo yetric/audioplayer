@@ -42,6 +42,7 @@ export interface AudioPlayerErrorState {
     | "INVALID_RATE"
     | "INVALID_QUEUE_ITEM"
     | "NO_ACTIVE_SOURCE"
+    | "UNSUPPORTED_ENVIRONMENT"
     | "UNKNOWN_ERROR";
   message: string;
 }
@@ -270,6 +271,23 @@ const createPlayerError = (
   message,
   cause,
 });
+
+const isRuntimePlayerError = (
+  value: unknown,
+): value is AudioPlayerRuntimeError =>
+  !!value &&
+  typeof value === "object" &&
+  "code" in value &&
+  "message" in value;
+
+const normalizePlayerError = (
+  fallbackCode: AudioPlayerRuntimeError["code"],
+  fallbackMessage: string,
+  cause: unknown,
+): AudioPlayerRuntimeError =>
+  isRuntimePlayerError(cause)
+    ? cause
+    : createPlayerError(fallbackCode, fallbackMessage, cause);
 
 const assertStableSource = (source: AudioSource): void => {
   if (!source.id || !source.src) {
@@ -526,10 +544,21 @@ export const createAudioPlayer = (
     emit("error", { error, state: nextState });
   };
 
+  const clearError = (): void => {
+    if (!state.error) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      error: null,
+    }));
+  };
+
   const requireAudio = (): HTMLAudioElement => {
     if (!audio) {
       throw createPlayerError(
-        "UNKNOWN_ERROR",
+        "UNSUPPORTED_ENVIRONMENT",
         "HTMLAudioElement is not available in this environment.",
       );
     }
@@ -565,7 +594,8 @@ export const createAudioPlayer = (
       volume: audio?.volume ?? currentState.volume,
       muted: audio?.muted ?? currentState.muted,
       status: statusOverride ?? currentState.status,
-      error: statusOverride === "error" ? currentState.error : currentState.error,
+      error:
+        statusOverride === "error" ? currentState.error : null,
     }));
 
     return nextState;
@@ -878,9 +908,7 @@ export const createAudioPlayer = (
         await loadInternal(source);
       } catch (cause) {
         setError(
-          cause && typeof cause === "object" && "code" in cause
-            ? (cause as AudioPlayerRuntimeError)
-            : createPlayerError("LOAD_ERROR", "Failed to load source.", cause),
+          normalizePlayerError("LOAD_ERROR", "Failed to load source.", cause),
         );
       }
     },
@@ -910,7 +938,7 @@ export const createAudioPlayer = (
 
         await playLoadedAudio();
       } catch (cause) {
-        setError(createPlayerError("PLAY_ERROR", "Failed to start playback.", cause));
+        setError(normalizePlayerError("PLAY_ERROR", "Failed to start playback.", cause));
       }
     },
 
@@ -950,7 +978,7 @@ export const createAudioPlayer = (
       try {
         audio.currentTime = normalized;
       } catch (cause) {
-        setError(createPlayerError("SEEK_ERROR", "Failed to seek audio.", cause));
+        setError(normalizePlayerError("SEEK_ERROR", "Failed to seek audio.", cause));
       }
     },
 
@@ -970,6 +998,7 @@ export const createAudioPlayer = (
       }
 
       audio.playbackRate = rate;
+      clearError();
       syncAudioSnapshot();
     },
 
@@ -989,6 +1018,7 @@ export const createAudioPlayer = (
       }
 
       audio.volume = volume;
+      clearError();
       syncAudioSnapshot();
     },
 
@@ -998,6 +1028,7 @@ export const createAudioPlayer = (
       }
 
       audio.muted = muted;
+      clearError();
       syncAudioSnapshot();
     },
 
@@ -1072,9 +1103,11 @@ export const createAudioPlayer = (
         }
       } catch (cause) {
         setError(
-          cause && typeof cause === "object" && "code" in cause
-            ? (cause as AudioPlayerRuntimeError)
-            : createPlayerError("INVALID_QUEUE_ITEM", "Failed to set queue.", cause),
+          normalizePlayerError(
+            "INVALID_QUEUE_ITEM",
+            "Failed to set queue.",
+            cause,
+          ),
         );
       }
     },
@@ -1095,9 +1128,11 @@ export const createAudioPlayer = (
         emitQueueChange(nextState);
       } catch (cause) {
         setError(
-          cause && typeof cause === "object" && "code" in cause
-            ? (cause as AudioPlayerRuntimeError)
-            : createPlayerError("INVALID_QUEUE_ITEM", "Failed to append queue items.", cause),
+          normalizePlayerError(
+            "INVALID_QUEUE_ITEM",
+            "Failed to append queue items.",
+            cause,
+          ),
         );
       }
     },
