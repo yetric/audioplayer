@@ -702,9 +702,12 @@ export const createAudioPlayer = (
     emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
   };
 
-  const attachSourceToAudio = (source: AudioSource): void => {
+  const attachSourceToAudio = (
+    source: AudioSource,
+    autoplayAfterLoad: boolean,
+  ): void => {
     const media = requireAudio();
-    shouldAutoplayAfterLoad = false;
+    shouldAutoplayAfterLoad = autoplayAfterLoad;
     suppressPauseEvent = true;
     media.pause();
     suppressPauseEvent = false;
@@ -716,19 +719,25 @@ export const createAudioPlayer = (
     media.load();
   };
 
-  const loadInternal = async (source: AudioSource): Promise<void> => {
+  const loadInternal = async (
+    source: AudioSource,
+    autoplayAfterLoad = false,
+  ): Promise<void> => {
     assertStableSource(source);
-    attachSourceToAudio(source);
     updateCurrentSource(source, "loading");
+    attachSourceToAudio(source, autoplayAfterLoad);
   };
 
-  const selectQueueIndex = async (index: number): Promise<AudioSource | null> => {
+  const selectQueueIndex = async (
+    index: number,
+    autoplayAfterLoad = false,
+  ): Promise<AudioSource | null> => {
     const item = state.queue.items[index] ?? null;
     if (!item) {
       return null;
     }
 
-    await loadInternal(item);
+    await loadInternal(item, autoplayAfterLoad);
     const nextState = setQueueState(state.queue.items, index);
     emitQueueChange(nextState);
     return item;
@@ -756,10 +765,7 @@ export const createAudioPlayer = (
         return;
       }
 
-      const nextItem = await selectQueueIndex(nextIndex);
-      if (nextItem) {
-        shouldAutoplayAfterLoad = true;
-      }
+      await selectQueueIndex(nextIndex, true);
       return;
     }
 
@@ -916,8 +922,7 @@ export const createAudioPlayer = (
     async play(source) {
       try {
         if (source) {
-          await loadInternal(source);
-          shouldAutoplayAfterLoad = true;
+          await loadInternal(source, true);
           return;
         }
 
@@ -1087,12 +1092,9 @@ export const createAudioPlayer = (
         });
 
         if (nextState.currentSource) {
-          await loadInternal(nextState.currentSource);
+          await loadInternal(nextState.currentSource, queueOptions.autoplay === true);
           const syncedState = setQueueState(items, startIndex);
           emitQueueChange(syncedState);
-          if (queueOptions.autoplay) {
-            shouldAutoplayAfterLoad = true;
-          }
         } else if (audio) {
           shouldAutoplayAfterLoad = false;
           suppressPauseEvent = true;
@@ -1182,10 +1184,7 @@ export const createAudioPlayer = (
         return;
       }
 
-      const nextItem = await selectQueueIndex(nextIndex);
-      if (nextItem) {
-        shouldAutoplayAfterLoad = true;
-      }
+      await selectQueueIndex(nextIndex, true);
     },
 
     async previous(previousOptions = {}) {
@@ -1208,10 +1207,7 @@ export const createAudioPlayer = (
         return;
       }
 
-      const previousItem = await selectQueueIndex(previousIndex);
-      if (previousItem) {
-        shouldAutoplayAfterLoad = true;
-      }
+      await selectQueueIndex(previousIndex, true);
     },
 
     setRepeatMode(mode) {

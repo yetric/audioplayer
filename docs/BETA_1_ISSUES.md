@@ -132,6 +132,7 @@ Priority is based on one question only: does this unblock replacing the current 
 - Goal: protect timing-sensitive playback behavior.
 - Done when:
   - unit tests cover state transitions
+  - mocked browser-audio tests cover load timing, seek, ended behavior, and auto-advance
   - browser tests cover load, seek, ended, and auto-advance
 
 ### Issue 012: Package ergonomics and distribution
