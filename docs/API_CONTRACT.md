@@ -39,6 +39,8 @@ Primary exported types:
 - `AudioPlayerProgressSnapshot`
 - `AudioPlayerProgressReporterOptions`
 - `AudioPlayerProgressReporterController`
+- `AudioPlayerMediaSessionOptions`
+- `AudioPlayerMediaSessionController`
 
 ## Command Semantics
 
@@ -56,6 +58,14 @@ Primary exported types:
 - The library emits normalized progress snapshots and does not own network requests
 - Reporting should happen on an interval while playing
 - Reporting should also happen on pause, ended, seek completion, and source changes
+
+### Media Session
+
+- Media Session integration is opt-in through `attachAudioPlayerMediaSession(...)`
+- Unsupported browsers should no-op cleanly
+- Metadata should come from the current `AudioSource`
+- Play, pause, seek backward, seek forward, previous track, next track, seek to, and stop should be wired when supported
+- Playback state and position state should stay in sync while the player changes
 
 ### `load(source)`
 
@@ -193,6 +203,7 @@ Explicitly in scope for `beta.1`:
 - repeat modes
 - ended-state preservation
 - opt-in persistence with `localStorage`
+- opt-in Media Session integration
 - React provider integration later
 
 Explicitly not required for `Issue 001`:

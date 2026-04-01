@@ -178,6 +178,16 @@ export interface AudioPlayerProgressReporterController {
   destroy(): void;
 }
 
+export interface AudioPlayerMediaSessionOptions {
+  artworkSizes?: number[];
+  seekOffsetSeconds?: number;
+}
+
+export interface AudioPlayerMediaSessionController {
+  sync(): void;
+  destroy(): void;
+}
+
 export type AudioPlayerEventListener<K extends AudioPlayerEventName> = (
   event: AudioPlayerEventMap[K],
 ) => void;
@@ -214,6 +224,8 @@ const DEFAULT_PREVIOUS_RESTART_THRESHOLD_SECONDS = 5;
 const DEFAULT_PERSISTENCE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_PERSISTENCE_SAVE_INTERVAL_MS = 5000;
 const DEFAULT_PROGRESS_REPORT_INTERVAL_MS = 5000;
+const DEFAULT_MEDIA_SESSION_ARTWORK_SIZES = [96, 128, 192, 256, 384, 512];
+const DEFAULT_MEDIA_SESSION_SEEK_OFFSET_SECONDS = 10;
 
 const createInitialState = (
   options: CreateAudioPlayerOptions,
@@ -393,6 +405,23 @@ const toProgressSnapshot = (
     ...state.queue.position,
   },
 });
+
+const hasMediaSession = (): boolean =>
+  typeof navigator !== "undefined" && "mediaSession" in navigator;
+
+const createMediaSessionArtwork = (
+  source: AudioSource | null,
+  sizes: number[],
+): MediaImage[] => {
+  if (!source?.artwork) {
+    return [];
+  }
+
+  return sizes.map((size) => ({
+    src: source.artwork as string,
+    sizes: `${size}x${size}`,
+  }));
+};
 
 export const createLocalStoragePersistenceAdapter = (
   key: string,
@@ -1438,6 +1467,150 @@ export const attachAudioPlayerProgressReporter = (
       endedUnsubscribe();
       seekedUnsubscribe();
       sourceUnsubscribe();
+    },
+  };
+};
+
+export const attachAudioPlayerMediaSession = (
+  player: AudioPlayer,
+  options: AudioPlayerMediaSessionOptions = {},
+): AudioPlayerMediaSessionController => {
+  if (!hasMediaSession()) {
+    return {
+      sync() {},
+      destroy() {},
+    };
+  }
+
+  const artworkSizes =
+    options.artworkSizes ?? DEFAULT_MEDIA_SESSION_ARTWORK_SIZES;
+  const seekOffsetSeconds =
+    options.seekOffsetSeconds ?? DEFAULT_MEDIA_SESSION_SEEK_OFFSET_SECONDS;
+  let destroyed = false;
+
+  const sync = (): void => {
+    if (destroyed || !hasMediaSession()) {
+      return;
+    }
+
+    const state = player.getState();
+    const source = state.currentSource;
+
+    navigator.mediaSession.metadata = source
+      ? new MediaMetadata({
+          title: source.title ?? "",
+          artist: source.artist ?? "",
+          album: source.album ?? "",
+          artwork: createMediaSessionArtwork(source, artworkSizes),
+        })
+      : null;
+
+    navigator.mediaSession.playbackState =
+      state.status === "playing"
+        ? "playing"
+        : state.currentSource
+          ? "paused"
+          : "none";
+
+    if (state.currentSource && state.duration > 0) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: state.duration,
+          playbackRate: state.rate,
+          position: Math.min(state.currentTime, state.duration),
+        });
+      } catch {
+        // Ignore unsupported position state implementations.
+      }
+    } else {
+      try {
+        navigator.mediaSession.setPositionState();
+      } catch {
+        // Ignore unsupported position state implementations.
+      }
+    }
+  };
+
+  const setActionHandler = (
+    action: MediaSessionAction,
+    handler: MediaSessionActionHandler | null,
+  ): void => {
+    try {
+      navigator.mediaSession.setActionHandler(action, handler);
+    } catch {
+      // Ignore unsupported actions.
+    }
+  };
+
+  setActionHandler("play", () => {
+    void player.play();
+  });
+  setActionHandler("pause", () => {
+    player.pause();
+  });
+  setActionHandler("seekbackward", () => {
+    const state = player.getState();
+    player.seek(Math.max(0, state.currentTime - seekOffsetSeconds));
+  });
+  setActionHandler("seekforward", () => {
+    const state = player.getState();
+    const max = state.duration > 0 ? state.duration : state.currentTime + seekOffsetSeconds;
+    player.seek(Math.min(max, state.currentTime + seekOffsetSeconds));
+  });
+  setActionHandler("previoustrack", () => {
+    void player.previous();
+  });
+  setActionHandler("nexttrack", () => {
+    void player.next();
+  });
+  setActionHandler("seekto", (details) => {
+    if (details.seekTime === undefined) {
+      return;
+    }
+
+    player.seek(details.seekTime);
+  });
+  setActionHandler("stop", () => {
+    player.pause();
+  });
+
+  const stateUnsubscribe = player.subscribe(() => {
+    sync();
+  });
+
+  sync();
+
+  return {
+    sync,
+    destroy() {
+      destroyed = true;
+      stateUnsubscribe();
+      if (!hasMediaSession()) {
+        return;
+      }
+
+      const actions: MediaSessionAction[] = [
+        "play",
+        "pause",
+        "seekbackward",
+        "seekforward",
+        "previoustrack",
+        "nexttrack",
+        "seekto",
+        "stop",
+      ];
+
+      for (const action of actions) {
+        setActionHandler(action, null);
+      }
+
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+      try {
+        navigator.mediaSession.setPositionState();
+      } catch {
+        // Ignore unsupported position state implementations.
+      }
     },
   };
 };

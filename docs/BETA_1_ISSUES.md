@@ -88,7 +88,9 @@ Priority is based on one question only: does this unblock replacing the current 
 
 - Goal: lock-screen and OS media controls for supported browsers.
 - Done when:
+  - a consumer can attach Media Session integration explicitly
   - metadata is updated on source changes
+  - playback state and position state are synchronized when supported
   - play, pause, seek, next, previous handlers work
   - unsupported browsers degrade silently
 
