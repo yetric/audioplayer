@@ -154,9 +154,42 @@ const createInitialState = (
   error: null,
 });
 
+const createPlayerError = (
+  code: AudioPlayerError["code"],
+  message: string,
+  cause?: unknown,
+): AudioPlayerError => ({
+  code,
+  message,
+  cause,
+});
+
 const assertStableSource = (source: AudioSource): void => {
   if (!source.id || !source.src) {
-    throw new Error("AudioSource requires stable id and src.");
+    throw createPlayerError(
+      "INVALID_QUEUE_ITEM",
+      "AudioSource requires stable id and src.",
+    );
+  }
+};
+
+const isFiniteNumber = (value: number): boolean =>
+  Number.isFinite(value) && !Number.isNaN(value);
+
+const safeDuration = (audio: HTMLAudioElement | null, hint?: number): number => {
+  const duration = audio?.duration;
+  return duration !== undefined && isFiniteNumber(duration) ? duration : hint ?? 0;
+};
+
+const safeBuffered = (audio: HTMLAudioElement | null): number => {
+  if (!audio || audio.buffered.length === 0) {
+    return 0;
+  }
+
+  try {
+    return audio.buffered.end(audio.buffered.length - 1);
+  } catch {
+    return 0;
   }
 };
 
@@ -195,10 +228,23 @@ const updateQueueFlags = (state: AudioPlayerState): AudioPlayerState => {
   };
 };
 
+const createAudioElement = (): HTMLAudioElement | null => {
+  if (typeof Audio === "undefined") {
+    return null;
+  }
+
+  return new Audio();
+};
+
 export const createAudioPlayer = (
   options: CreateAudioPlayerOptions = {},
 ): AudioPlayer => {
   let state = updateQueueFlags(createInitialState(options));
+  let destroyed = false;
+  let shouldAutoplayAfterLoad = false;
+  let suppressPauseEvent = false;
+
+  const audio = createAudioElement();
   const subscribers = new Set<(nextState: AudioPlayerState) => void>();
   const eventListeners: {
     [K in AudioPlayerEventName]: Set<AudioPlayerEventListener<K>>;
@@ -242,21 +288,8 @@ export const createAudioPlayer = (
     return state;
   };
 
-  const setCurrentSource = (source: AudioSource | null): AudioPlayerState => {
-    const nextState = setState((currentState) => ({
-      ...currentState,
-      currentSource: source,
-      currentTime: 0,
-      duration: source?.durationHint ?? 0,
-      buffered: 0,
-      status: source ? "ready" : "idle",
-      error: null,
-    }));
-    emit("sourcechange", { source, state: nextState });
-    return nextState;
-  };
-
   const setError = (error: AudioPlayerError): void => {
+    shouldAutoplayAfterLoad = false;
     const nextState = setState((currentState) => ({
       ...currentState,
       status: "error",
@@ -265,24 +298,263 @@ export const createAudioPlayer = (
     emit("error", { error, state: nextState });
   };
 
-  const selectQueueIndex = (index: number): AudioSource | null => {
-    const item = state.queue.items[index] ?? null;
-    setState((currentState) => ({
+  const requireAudio = (): HTMLAudioElement => {
+    if (!audio) {
+      throw createPlayerError(
+        "UNKNOWN_ERROR",
+        "HTMLAudioElement is not available in this environment.",
+      );
+    }
+
+    return audio;
+  };
+
+  const syncAudioSnapshot = (
+    statusOverride?: PlayerStatus,
+  ): AudioPlayerState => {
+    const nextState = setState((currentState) => ({
       ...currentState,
-      currentSource: item,
+      currentTime: audio?.currentTime ?? currentState.currentTime,
+      duration: safeDuration(audio, currentState.currentSource?.durationHint),
+      buffered: safeBuffered(audio),
+      rate: audio?.playbackRate ?? currentState.rate,
+      volume: audio?.volume ?? currentState.volume,
+      muted: audio?.muted ?? currentState.muted,
+      status: statusOverride ?? currentState.status,
+      error: statusOverride === "error" ? currentState.error : currentState.error,
+    }));
+
+    return nextState;
+  };
+
+  const findQueueIndexById = (id: string | null | undefined): number =>
+    id ? state.queue.items.findIndex((item) => item.id === id) : -1;
+
+  const updateCurrentSource = (
+    source: AudioSource | null,
+    nextStatus: PlayerStatus,
+  ): AudioPlayerState => {
+    const queueIndex = findQueueIndexById(source?.id);
+    const nextState = setState((currentState) => ({
+      ...currentState,
+      currentSource: source,
       currentTime: 0,
-      duration: item?.durationHint ?? 0,
+      duration: source?.durationHint ?? 0,
       buffered: 0,
-      status: item ? "ready" : "idle",
+      status: nextStatus,
       error: null,
       queue: {
         ...currentState.queue,
-        currentIndex: item ? index : -1,
+        currentIndex: queueIndex,
       },
     }));
-    emit("sourcechange", { source: item, state });
+    emit("sourcechange", { source, state: nextState });
+    return nextState;
+  };
+
+  const setQueueState = (
+    items: AudioSource[],
+    currentIndex: number,
+  ): AudioPlayerState =>
+    setState((currentState) => ({
+      ...currentState,
+      queue: {
+        ...currentState.queue,
+        items,
+        currentIndex,
+      },
+    }));
+
+  const emitQueueChange = (nextState: AudioPlayerState): void => {
+    emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
+  };
+
+  const attachSourceToAudio = (source: AudioSource): void => {
+    const media = requireAudio();
+    shouldAutoplayAfterLoad = false;
+    suppressPauseEvent = true;
+    media.pause();
+    suppressPauseEvent = false;
+    media.src = source.src;
+    media.currentTime = 0;
+    media.playbackRate = state.rate;
+    media.volume = state.volume;
+    media.muted = state.muted;
+    media.load();
+  };
+
+  const loadInternal = async (source: AudioSource): Promise<void> => {
+    assertStableSource(source);
+    attachSourceToAudio(source);
+    updateCurrentSource(source, "loading");
+  };
+
+  const selectQueueIndex = async (index: number): Promise<AudioSource | null> => {
+    const item = state.queue.items[index] ?? null;
+    if (!item) {
+      return null;
+    }
+
+    await loadInternal(item);
+    const nextState = setQueueState(state.queue.items, index);
+    emitQueueChange(nextState);
     return item;
   };
+
+  const playLoadedAudio = async (): Promise<void> => {
+    const media = requireAudio();
+    try {
+      await media.play();
+    } catch (cause) {
+      setError(createPlayerError("PLAY_ERROR", "Failed to start playback.", cause));
+    }
+  };
+
+  const handlePlaybackEnded = async (): Promise<void> => {
+    if (destroyed) {
+      return;
+    }
+
+    const { items, currentIndex, repeatMode } = state.queue;
+    if (items.length > 0 && currentIndex >= 0) {
+      let nextIndex = currentIndex;
+
+      if (repeatMode === "one") {
+        nextIndex = currentIndex;
+      } else if (currentIndex < items.length - 1) {
+        nextIndex = currentIndex + 1;
+      } else if (repeatMode === "all") {
+        nextIndex = 0;
+      } else {
+        const endedState = syncAudioSnapshot("ended");
+        emit("ended", { source: endedState.currentSource, state: endedState });
+        return;
+      }
+
+      const nextItem = await selectQueueIndex(nextIndex);
+      if (nextItem) {
+        shouldAutoplayAfterLoad = true;
+      }
+      return;
+    }
+
+    const endedState = syncAudioSnapshot("ended");
+    emit("ended", { source: endedState.currentSource, state: endedState });
+  };
+
+  if (audio) {
+    audio.preload = "metadata";
+    audio.playbackRate = state.rate;
+    audio.volume = state.volume;
+    audio.muted = state.muted;
+
+    audio.addEventListener("loadedmetadata", () => {
+      if (destroyed || !state.currentSource) {
+        return;
+      }
+
+      syncAudioSnapshot("ready");
+      if (shouldAutoplayAfterLoad) {
+        shouldAutoplayAfterLoad = false;
+        void playLoadedAudio();
+      }
+    });
+
+    audio.addEventListener("timeupdate", () => {
+      if (destroyed) {
+        return;
+      }
+
+      const nextState = syncAudioSnapshot(
+        state.status === "ended" ? "playing" : undefined,
+      );
+      emit("timeupdate", {
+        currentTime: nextState.currentTime,
+        duration: nextState.duration,
+        state: nextState,
+      });
+    });
+
+    audio.addEventListener("progress", () => {
+      if (!destroyed) {
+        syncAudioSnapshot();
+      }
+    });
+
+    audio.addEventListener("play", () => {
+      if (destroyed) {
+        return;
+      }
+
+      const nextState = syncAudioSnapshot("playing");
+      emit("play", { source: nextState.currentSource, state: nextState });
+    });
+
+    audio.addEventListener("pause", () => {
+      if (destroyed || suppressPauseEvent) {
+        return;
+      }
+
+      const nextStatus =
+        state.status === "ended" ? "ended" : state.currentSource ? "paused" : "idle";
+      const nextState = syncAudioSnapshot(nextStatus);
+      emit("pause", { source: nextState.currentSource, state: nextState });
+    });
+
+    audio.addEventListener("seeked", () => {
+      if (destroyed) {
+        return;
+      }
+
+      const nextState = syncAudioSnapshot();
+      emit("seeked", { currentTime: nextState.currentTime, state: nextState });
+      emit("timeupdate", {
+        currentTime: nextState.currentTime,
+        duration: nextState.duration,
+        state: nextState,
+      });
+    });
+
+    audio.addEventListener("ratechange", () => {
+      if (destroyed) {
+        return;
+      }
+
+      const nextState = syncAudioSnapshot();
+      emit("ratechange", { rate: nextState.rate, state: nextState });
+    });
+
+    audio.addEventListener("volumechange", () => {
+      if (destroyed) {
+        return;
+      }
+
+      const nextState = syncAudioSnapshot();
+      emit("volumechange", {
+        volume: nextState.volume,
+        muted: nextState.muted,
+        state: nextState,
+      });
+    });
+
+    audio.addEventListener("ended", () => {
+      void handlePlaybackEnded();
+    });
+
+    audio.addEventListener("error", () => {
+      if (destroyed) {
+        return;
+      }
+
+      setError(
+        createPlayerError(
+          "LOAD_ERROR",
+          "Audio element reported a playback error.",
+          audio.error,
+        ),
+      );
+    });
+  }
 
   return {
     getState,
@@ -307,41 +579,53 @@ export const createAudioPlayer = (
     },
 
     async load(source) {
-      assertStableSource(source);
-      setCurrentSource(source);
+      try {
+        await loadInternal(source);
+      } catch (cause) {
+        setError(
+          cause && typeof cause === "object" && "code" in cause
+            ? (cause as AudioPlayerError)
+            : createPlayerError("LOAD_ERROR", "Failed to load source.", cause),
+        );
+      }
     },
 
     async play(source) {
-      if (source) {
-        assertStableSource(source);
-        setCurrentSource(source);
-      }
+      try {
+        if (source) {
+          await loadInternal(source);
+          shouldAutoplayAfterLoad = true;
+          return;
+        }
 
-      if (!state.currentSource) {
-        setError({
-          code: "NO_ACTIVE_SOURCE",
-          message: "Cannot play without an active source.",
-        });
-        return;
-      }
+        if (!state.currentSource) {
+          setError(
+            createPlayerError(
+              "NO_ACTIVE_SOURCE",
+              "Cannot play without an active source.",
+            ),
+          );
+          return;
+        }
 
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        status: "playing",
-        error: null,
-      }));
-      emit("play", { source: nextState.currentSource, state: nextState });
+        if (state.status === "loading") {
+          shouldAutoplayAfterLoad = true;
+          return;
+        }
+
+        await playLoadedAudio();
+      } catch (cause) {
+        setError(createPlayerError("PLAY_ERROR", "Failed to start playback.", cause));
+      }
     },
 
     pause() {
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        status:
-          currentState.currentSource && currentState.status !== "idle"
-            ? "paused"
-            : currentState.status,
-      }));
-      emit("pause", { source: nextState.currentSource, state: nextState });
+      if (!audio) {
+        return;
+      }
+
+      shouldAutoplayAfterLoad = false;
+      audio.pause();
     },
 
     async toggle() {
@@ -354,120 +638,160 @@ export const createAudioPlayer = (
     },
 
     seek(time) {
-      const to = Math.max(0, Number.isFinite(time) ? time : 0);
-      emit("seeking", { from: state.currentTime, to, state });
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        currentTime: to,
-      }));
-      emit("seeked", { currentTime: nextState.currentTime, state: nextState });
-      emit("timeupdate", {
-        currentTime: nextState.currentTime,
-        duration: nextState.duration,
-        state: nextState,
-      });
+      if (!audio || !state.currentSource) {
+        setError(
+          createPlayerError("SEEK_ERROR", "Cannot seek without an active source."),
+        );
+        return;
+      }
+
+      const max = safeDuration(audio, state.currentSource.durationHint);
+      const normalized = Math.max(
+        0,
+        max > 0 ? Math.min(time, max) : (isFiniteNumber(time) ? time : 0),
+      );
+      emit("seeking", { from: state.currentTime, to: normalized, state });
+
+      try {
+        audio.currentTime = normalized;
+      } catch (cause) {
+        setError(createPlayerError("SEEK_ERROR", "Failed to seek audio.", cause));
+      }
     },
 
     setRate(rate) {
-      if (!Number.isFinite(rate) || rate <= 0) {
-        setError({
-          code: "INVALID_RATE",
-          message: "Playback rate must be greater than 0.",
-        });
+      if (!audio) {
+        setError(
+          createPlayerError("INVALID_RATE", "Audio element is unavailable."),
+        );
         return;
       }
 
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        rate,
-      }));
-      emit("ratechange", { rate, state: nextState });
+      if (!isFiniteNumber(rate) || rate <= 0) {
+        setError(
+          createPlayerError("INVALID_RATE", "Playback rate must be greater than 0."),
+        );
+        return;
+      }
+
+      audio.playbackRate = rate;
+      syncAudioSnapshot();
     },
 
     setVolume(volume) {
-      if (!Number.isFinite(volume) || volume < 0 || volume > 1) {
-        setError({
-          code: "INVALID_VOLUME",
-          message: "Volume must be between 0 and 1.",
-        });
+      if (!audio) {
+        setError(
+          createPlayerError("INVALID_VOLUME", "Audio element is unavailable."),
+        );
         return;
       }
 
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        volume,
-      }));
-      emit("volumechange", {
-        volume: nextState.volume,
-        muted: nextState.muted,
-        state: nextState,
-      });
+      if (!isFiniteNumber(volume) || volume < 0 || volume > 1) {
+        setError(
+          createPlayerError("INVALID_VOLUME", "Volume must be between 0 and 1."),
+        );
+        return;
+      }
+
+      audio.volume = volume;
+      syncAudioSnapshot();
     },
 
     setMuted(muted) {
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        muted,
-      }));
-      emit("volumechange", {
-        volume: nextState.volume,
-        muted: nextState.muted,
-        state: nextState,
-      });
+      if (!audio) {
+        return;
+      }
+
+      audio.muted = muted;
+      syncAudioSnapshot();
     },
 
     async setQueue(items, queueOptions = {}) {
-      for (const item of items) {
-        assertStableSource(item);
-      }
+      try {
+        for (const item of items) {
+          assertStableSource(item);
+        }
 
-      const startIndex =
-        queueOptions.startAtId === undefined
-          ? items.length > 0
-            ? 0
-            : -1
-          : items.findIndex((item) => item.id === queueOptions.startAtId);
+        const startIndex =
+          queueOptions.startAtId === undefined
+            ? items.length > 0
+              ? 0
+              : -1
+            : items.findIndex((item) => item.id === queueOptions.startAtId);
 
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        currentSource: startIndex >= 0 ? items[startIndex] ?? null : null,
-        currentTime: 0,
-        duration:
-          startIndex >= 0 ? (items[startIndex]?.durationHint ?? 0) : 0,
-        buffered: 0,
-        status: startIndex >= 0 ? "ready" : "idle",
-        error: null,
-        queue: {
-          ...currentState.queue,
-          items: [...items],
-          currentIndex: startIndex,
-        },
-      }));
+        if (queueOptions.startAtId && startIndex < 0) {
+          throw createPlayerError(
+            "INVALID_QUEUE_ITEM",
+            `Queue start item ${queueOptions.startAtId} was not found.`,
+          );
+        }
 
-      emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
-      emit("sourcechange", {
-        source: nextState.currentSource,
-        state: nextState,
-      });
+        const nextState = setState((currentState) => ({
+          ...currentState,
+          currentSource: startIndex >= 0 ? items[startIndex] ?? null : null,
+          currentTime: 0,
+          duration: startIndex >= 0 ? (items[startIndex]?.durationHint ?? 0) : 0,
+          buffered: 0,
+          status: startIndex >= 0 ? "ready" : "idle",
+          error: null,
+          queue: {
+            ...currentState.queue,
+            items: [...items],
+            currentIndex: startIndex,
+          },
+        }));
 
-      if (queueOptions.autoplay && nextState.currentSource) {
-        await this.play();
+        emitQueueChange(nextState);
+        emit("sourcechange", {
+          source: nextState.currentSource,
+          state: nextState,
+        });
+
+        if (nextState.currentSource) {
+          await loadInternal(nextState.currentSource);
+          const syncedState = setQueueState(items, startIndex);
+          emitQueueChange(syncedState);
+          if (queueOptions.autoplay) {
+            shouldAutoplayAfterLoad = true;
+          }
+        } else if (audio) {
+          shouldAutoplayAfterLoad = false;
+          suppressPauseEvent = true;
+          audio.pause();
+          suppressPauseEvent = false;
+          audio.removeAttribute("src");
+          audio.load();
+        }
+      } catch (cause) {
+        setError(
+          cause && typeof cause === "object" && "code" in cause
+            ? (cause as AudioPlayerError)
+            : createPlayerError("INVALID_QUEUE_ITEM", "Failed to set queue.", cause),
+        );
       }
     },
 
     appendToQueue(items) {
-      for (const item of items) {
-        assertStableSource(item);
-      }
+      try {
+        for (const item of items) {
+          assertStableSource(item);
+        }
 
-      const nextState = setState((currentState) => ({
-        ...currentState,
-        queue: {
-          ...currentState.queue,
-          items: [...currentState.queue.items, ...items],
-        },
-      }));
-      emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
+        const nextState = setState((currentState) => ({
+          ...currentState,
+          queue: {
+            ...currentState.queue,
+            items: [...currentState.queue.items, ...items],
+          },
+        }));
+        emitQueueChange(nextState);
+      } catch (cause) {
+        setError(
+          cause && typeof cause === "object" && "code" in cause
+            ? (cause as AudioPlayerError)
+            : createPlayerError("INVALID_QUEUE_ITEM", "Failed to append queue items.", cause),
+        );
+      }
     },
 
     removeFromQueue(id) {
@@ -475,15 +799,9 @@ export const createAudioPlayer = (
       const nextIndex = nextItems.findIndex(
         (item) => item.id === state.currentSource?.id,
       );
-      const currentSource = nextIndex >= 0 ? nextItems[nextIndex] : null;
 
       const nextState = setState((currentState) => ({
         ...currentState,
-        currentSource,
-        currentTime: currentSource ? currentState.currentTime : 0,
-        duration: currentSource
-          ? currentSource.durationHint ?? currentState.duration
-          : 0,
         queue: {
           ...currentState.queue,
           items: nextItems,
@@ -491,7 +809,7 @@ export const createAudioPlayer = (
         },
       }));
 
-      emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
+      emitQueueChange(nextState);
     },
 
     clearQueue() {
@@ -503,38 +821,42 @@ export const createAudioPlayer = (
           currentIndex: -1,
         },
       }));
-      emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
+
+      emitQueueChange(nextState);
     },
 
     async next() {
       const { items, currentIndex, repeatMode } = state.queue;
       if (items.length === 0) {
+        const endedState = syncAudioSnapshot("ended");
+        emit("ended", { source: endedState.currentSource, state: endedState });
         return;
       }
 
       let nextIndex = currentIndex + 1;
-      if (nextIndex >= items.length) {
+      if (repeatMode === "one") {
+        nextIndex = currentIndex >= 0 ? currentIndex : 0;
+      } else if (nextIndex >= items.length) {
         if (repeatMode === "all") {
           nextIndex = 0;
-        } else if (repeatMode === "one") {
-          nextIndex = currentIndex;
         } else {
-          const nextState = setState((currentState) => ({
-            ...currentState,
-            status: "ended",
-          }));
-          emit("ended", { source: nextState.currentSource, state: nextState });
+          const endedState = syncAudioSnapshot("ended");
+          emit("ended", { source: endedState.currentSource, state: endedState });
           return;
         }
       }
 
-      const item = selectQueueIndex(nextIndex);
-      if (item) {
-        await this.play();
+      const nextItem = await selectQueueIndex(nextIndex);
+      if (nextItem) {
+        shouldAutoplayAfterLoad = true;
       }
     },
 
     async previous(previousOptions = {}) {
+      if (!state.currentSource) {
+        return;
+      }
+
       const threshold =
         previousOptions.restartThresholdSeconds ??
         DEFAULT_PREVIOUS_RESTART_THRESHOLD_SECONDS;
@@ -545,10 +867,8 @@ export const createAudioPlayer = (
       }
 
       const { items, currentIndex, repeatMode } = state.queue;
-      if (items.length === 0) {
-        if (state.currentSource) {
-          this.seek(0);
-        }
+      if (items.length === 0 || currentIndex < 0) {
+        this.seek(0);
         return;
       }
 
@@ -562,9 +882,9 @@ export const createAudioPlayer = (
         }
       }
 
-      const item = selectQueueIndex(previousIndex);
-      if (item) {
-        await this.play();
+      const previousItem = await selectQueueIndex(previousIndex);
+      if (previousItem) {
+        shouldAutoplayAfterLoad = true;
       }
     },
 
@@ -576,19 +896,26 @@ export const createAudioPlayer = (
           repeatMode: mode,
         },
       }));
-      emit("queuechange", { queue: cloneQueueState(nextState), state: nextState });
+      emitQueueChange(nextState);
     },
 
     destroy() {
-      const nextState = setState((currentState) => ({
-        ...createInitialState(options),
-        queue: {
-          ...createInitialState(options).queue,
-        },
-        rate: currentState.rate,
-        volume: currentState.volume,
-        muted: currentState.muted,
-      }));
+      if (destroyed) {
+        return;
+      }
+
+      destroyed = true;
+      shouldAutoplayAfterLoad = false;
+
+      if (audio) {
+        suppressPauseEvent = true;
+        audio.pause();
+        suppressPauseEvent = false;
+        audio.removeAttribute("src");
+        audio.load();
+      }
+
+      const nextState = setState(() => createInitialState(options));
       emit("destroy", { state: nextState });
       subscribers.clear();
       for (const eventName of Object.keys(eventListeners) as AudioPlayerEventName[]) {

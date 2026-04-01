@@ -4,6 +4,8 @@ This document freezes the intended `Issue 001` contract for `1.0.0-beta.1`.
 
 It is not the full implementation spec for browser playback internals. It is the public TypeScript surface and the behavior a developer should build against.
 
+The current implementation target is a browser `HTMLAudioElement` engine. Non-browser environments may construct the player, but actual playback commands require a browser audio implementation.
+
 ## Core Principles
 
 - Imperative instance API first
@@ -36,12 +38,14 @@ Primary exported types:
 - Replaces the active source
 - Does not start playback by itself
 - Resets `currentTime` to `0`
+- Transitions to `loading`, then to `ready` when metadata becomes available
 
 ### `play(source?)`
 
 - If `source` is provided, the player auto-loads it first
 - If no source is active, this is an error condition
 - Intended to return `Promise<void>` because browser playback can be async and reject
+- If a source is still loading, play intent should be remembered and start once loading completes
 
 ### `pause()`
 
@@ -56,6 +60,7 @@ Primary exported types:
 ### `seek(time)`
 
 - Clamps to `>= 0`
+- Clamps to duration when duration is known
 - `beta.1` contract should not throw for normal out-of-range values
 
 ### `setRate(rate)`
