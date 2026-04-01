@@ -389,6 +389,50 @@ export const createAudioPlayer = (
   const findQueueIndexById = (id: string | null | undefined): number =>
     id ? state.queue.items.findIndex((item) => item.id === id) : -1;
 
+  const resolveNextQueueIndex = (
+    mode: "manual" | "ended",
+  ): number | null => {
+    const { items, position } = state.queue;
+    const { currentIndex, repeatMode } = position;
+
+    if (items.length === 0 || currentIndex < 0) {
+      return null;
+    }
+
+    if (repeatMode === "one") {
+      return currentIndex;
+    }
+
+    if (currentIndex < items.length - 1) {
+      return currentIndex + 1;
+    }
+
+    if (repeatMode === "all") {
+      return 0;
+    }
+
+    return mode === "ended" ? -1 : null;
+  };
+
+  const resolvePreviousQueueIndex = (): number | null => {
+    const { items, position } = state.queue;
+    const { currentIndex, repeatMode } = position;
+
+    if (items.length === 0 || currentIndex < 0) {
+      return null;
+    }
+
+    if (currentIndex > 0) {
+      return currentIndex - 1;
+    }
+
+    if (repeatMode === "all") {
+      return items.length - 1;
+    }
+
+    return null;
+  };
+
   const updateCurrentSource = (
     source: AudioSource | null,
     nextStatus: PlayerStatus,
@@ -489,18 +533,9 @@ export const createAudioPlayer = (
       return;
     }
 
-    const { items, position } = state.queue;
-    const { currentIndex, repeatMode } = position;
-    if (items.length > 0 && currentIndex >= 0) {
-      let nextIndex = currentIndex;
-
-      if (repeatMode === "one") {
-        nextIndex = currentIndex;
-      } else if (currentIndex < items.length - 1) {
-        nextIndex = currentIndex + 1;
-      } else if (repeatMode === "all") {
-        nextIndex = 0;
-      } else {
+    if (state.queue.items.length > 0 && state.queue.position.currentIndex >= 0) {
+      const nextIndex = resolveNextQueueIndex("ended");
+      if (nextIndex === -1 || nextIndex === null) {
         const endedState = syncAudioSnapshot("ended");
         emit("ended", { source: endedState.currentSource, state: endedState });
         return;
@@ -922,25 +957,9 @@ export const createAudioPlayer = (
     },
 
     async next() {
-      const { items, position } = state.queue;
-      const { currentIndex, repeatMode } = position;
-      if (items.length === 0) {
-        const endedState = syncAudioSnapshot("ended");
-        emit("ended", { source: endedState.currentSource, state: endedState });
+      const nextIndex = resolveNextQueueIndex("manual");
+      if (nextIndex === null) {
         return;
-      }
-
-      let nextIndex = currentIndex + 1;
-      if (repeatMode === "one") {
-        nextIndex = currentIndex >= 0 ? currentIndex : 0;
-      } else if (nextIndex >= items.length) {
-        if (repeatMode === "all") {
-          nextIndex = 0;
-        } else {
-          const endedState = syncAudioSnapshot("ended");
-          emit("ended", { source: endedState.currentSource, state: endedState });
-          return;
-        }
       }
 
       const nextItem = await selectQueueIndex(nextIndex);
@@ -963,21 +982,10 @@ export const createAudioPlayer = (
         return;
       }
 
-      const { items, position } = state.queue;
-      const { currentIndex, repeatMode } = position;
-      if (items.length === 0 || currentIndex < 0) {
+      const previousIndex = resolvePreviousQueueIndex();
+      if (previousIndex === null) {
         this.seek(0);
         return;
-      }
-
-      let previousIndex = currentIndex - 1;
-      if (previousIndex < 0) {
-        if (repeatMode === "all") {
-          previousIndex = items.length - 1;
-        } else {
-          this.seek(0);
-          return;
-        }
       }
 
       const previousItem = await selectQueueIndex(previousIndex);

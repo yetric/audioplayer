@@ -55,6 +55,8 @@ Priority is based on one question only: does this unblock replacing the current 
   - queue supports set, append, remove, clear, next, previous
   - previous behavior supports "restart current if more than N seconds in"
   - repeat modes are supported at least as `off | one | all`
+  - manual next/previous behavior is distinct from actual playback-end behavior
+  - queue mutations keep active playback stable unless the caller explicitly changes source
 
 ### Issue 005: Persistence and resume plugin
 

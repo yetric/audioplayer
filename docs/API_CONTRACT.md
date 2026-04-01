@@ -84,15 +84,22 @@ Primary exported types:
 ### `next()`
 
 - Moves to the next queue item and plays it
+- If there is no next item and repeat is off, manual `next()` is a no-op
 - If `repeatMode === "all"` and the queue is exhausted, wraps to the first item
 - If `repeatMode === "one"`, keeps the current item
-- If repeat is off and no next item exists, the current item remains loaded and status becomes `ended`
+- Only actual playback end should move the player into `status: "ended"` when repeat is off
 
 ### `previous(options?)`
 
 - If current time is greater than the restart threshold, restarts the current item
 - Otherwise moves to the previous queue item
 - If there is no previous item and repeat is off, restarts the current item
+
+### Queue mutation behavior
+
+- Removing the active item from the queue does not forcibly unload the current source
+- Clearing the queue removes queue navigation state but does not forcibly unload the current source
+- Queue mutations should keep active playback stable unless the caller explicitly loads another item
 
 ### `destroy()`
 
