@@ -36,6 +36,9 @@ Primary exported types:
 - `AudioPlayerPersistenceAdapter`
 - `AudioPlayerPersistenceOptions`
 - `AudioPlayerPersistenceController`
+- `AudioPlayerProgressSnapshot`
+- `AudioPlayerProgressReporterOptions`
+- `AudioPlayerProgressReporterController`
 
 ## Command Semantics
 
@@ -46,6 +49,13 @@ Primary exported types:
 - Restore must not auto-play by itself
 - Persistence saves plain-data only
 - Persistence should save on pause, ended, source change, queue change, rate/volume changes, and periodically while playing
+
+### Progress Reporting
+
+- Progress reporting is opt-in through `attachAudioPlayerProgressReporter(...)`
+- The library emits normalized progress snapshots and does not own network requests
+- Reporting should happen on an interval while playing
+- Reporting should also happen on pause, ended, seek completion, and source changes
 
 ### `load(source)`
 

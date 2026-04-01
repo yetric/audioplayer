@@ -158,6 +158,26 @@ export interface AudioPlayerPersistenceController {
   destroy(): void;
 }
 
+export interface AudioPlayerProgressSnapshot {
+  source: AudioSource | null;
+  sourceId: string | null;
+  currentTime: number;
+  duration: number;
+  playedFraction: number;
+  status: PlayerStatus;
+  queue: AudioPlayerQueuePositionState;
+}
+
+export interface AudioPlayerProgressReporterOptions {
+  intervalMs?: number;
+  onReport: (snapshot: AudioPlayerProgressSnapshot) => void;
+}
+
+export interface AudioPlayerProgressReporterController {
+  report(): void;
+  destroy(): void;
+}
+
 export type AudioPlayerEventListener<K extends AudioPlayerEventName> = (
   event: AudioPlayerEventMap[K],
 ) => void;
@@ -193,6 +213,7 @@ export interface AudioPlayer {
 const DEFAULT_PREVIOUS_RESTART_THRESHOLD_SECONDS = 5;
 const DEFAULT_PERSISTENCE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const DEFAULT_PERSISTENCE_SAVE_INTERVAL_MS = 5000;
+const DEFAULT_PROGRESS_REPORT_INTERVAL_MS = 5000;
 
 const createInitialState = (
   options: CreateAudioPlayerOptions,
@@ -356,6 +377,20 @@ const toPersistedPlayerState = (state: AudioPlayerState): PersistedPlayerState =
       currentSourceId: state.queue.position.currentSourceId,
       repeatMode: state.queue.position.repeatMode,
     },
+  },
+});
+
+const toProgressSnapshot = (
+  state: AudioPlayerState,
+): AudioPlayerProgressSnapshot => ({
+  source: state.currentSource,
+  sourceId: state.currentSourceId,
+  currentTime: state.currentTime,
+  duration: state.duration,
+  playedFraction: state.progress.playedFraction,
+  status: state.status,
+  queue: {
+    ...state.queue.position,
   },
 });
 
@@ -1329,6 +1364,80 @@ export const attachAudioPlayerPersistence = (
       if (typeof document !== "undefined") {
         document.removeEventListener("visibilitychange", visibilityHandler);
       }
+    },
+  };
+};
+
+export const attachAudioPlayerProgressReporter = (
+  player: AudioPlayer,
+  options: AudioPlayerProgressReporterOptions,
+): AudioPlayerProgressReporterController => {
+  const intervalMs = options.intervalMs ?? DEFAULT_PROGRESS_REPORT_INTERVAL_MS;
+  let destroyed = false;
+  let intervalId: ReturnType<typeof setInterval> | null = null;
+
+  const report = (): void => {
+    if (destroyed) {
+      return;
+    }
+
+    const state = player.getState();
+    if (!state.currentSource) {
+      return;
+    }
+
+    options.onReport(toProgressSnapshot(state));
+  };
+
+  const stopInterval = (): void => {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+
+  const startInterval = (): void => {
+    if (intervalId !== null) {
+      return;
+    }
+
+    intervalId = setInterval(() => {
+      report();
+    }, intervalMs);
+  };
+
+  const stateUnsubscribe = player.subscribe((state) => {
+    if (state.status === "playing") {
+      startInterval();
+      return;
+    }
+
+    stopInterval();
+  });
+
+  const pauseUnsubscribe = player.on("pause", () => {
+    report();
+  });
+  const endedUnsubscribe = player.on("ended", () => {
+    report();
+  });
+  const seekedUnsubscribe = player.on("seeked", () => {
+    report();
+  });
+  const sourceUnsubscribe = player.on("sourcechange", () => {
+    report();
+  });
+
+  return {
+    report,
+    destroy() {
+      destroyed = true;
+      stopInterval();
+      stateUnsubscribe();
+      pauseUnsubscribe();
+      endedUnsubscribe();
+      seekedUnsubscribe();
+      sourceUnsubscribe();
     },
   };
 };

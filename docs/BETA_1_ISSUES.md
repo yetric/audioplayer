@@ -78,8 +78,10 @@ Priority is based on one question only: does this unblock replacing the current 
 - `podcast-app` mapping:
   - current 5-second ping flow to backend
 - Done when:
-  - consumer can subscribe to progress snapshots
+  - a consumer can attach a progress reporting controller
+  - progress reports include source identity, current time, duration, played fraction, status, and queue position
   - configurable reporting interval exists
+  - reports fire on interval while playing and on key transitions like pause, ended, seek, and source change
   - library does not own network requests
 
 ### Issue 007: Media Session integration
