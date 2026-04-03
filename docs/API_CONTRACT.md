@@ -103,6 +103,13 @@ Primary exported types:
 - If currently playing, pauses
 - Otherwise tries to play the active source
 
+### `unload()`
+
+- Pauses and clears the active source without destroying the player instance
+- Resets playback progress to `0`
+- Moves the player to `status: "idle"`
+- Keeps queue items intact but clears the active queue selection
+
 ### `seek(time)`
 
 - Clamps to `>= 0`

@@ -7,6 +7,7 @@ Priority is based on one question only: does this unblock replacing the current 
 ### Issue 001: Define the core player contract
 
 - Goal: lock the smallest stable public API for load, play, pause, seek, rate, volume, subscribe, and destroy.
+- Goal: lock the smallest stable public API for load, play, pause, unload, seek, rate, volume, subscribe, and destroy.
 - Why first: every adapter and integration depends on this.
 - Primary artifacts:
   - `src/index.ts`

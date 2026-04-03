@@ -173,6 +173,24 @@ describe("createAudioPlayer", () => {
     expect(player.getState().status).not.toBe("ended");
   });
 
+  it("unloads the active source without destroying the player", async () => {
+    const player = createAudioPlayer();
+
+    await player.setQueue([episodeOne, episodeTwo], {
+      startAtId: "episode-1",
+      autoplay: true,
+    });
+
+    player.unload();
+
+    expect(player.getState().status).toBe("idle");
+    expect(player.getState().currentSource).toBeNull();
+    expect(player.getState().currentSourceId).toBeNull();
+    expect(player.getState().currentTime).toBe(0);
+    expect(player.getState().queue.items).toEqual([episodeOne, episodeTwo]);
+    expect(player.getState().queue.position.currentIndex).toBe(-1);
+  });
+
   it("surfaces unsupported environments through the typed error state", async () => {
     vi.stubGlobal("Audio", undefined);
 

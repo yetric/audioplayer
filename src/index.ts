@@ -205,6 +205,7 @@ export interface AudioPlayer {
   play(source?: AudioSource): Promise<void>;
   pause(): void;
   toggle(): Promise<void>;
+  unload(): void;
   seek(time: number): void;
   setRate(rate: number): void;
   setVolume(volume: number): void;
@@ -1109,6 +1110,24 @@ export const createAudioPlayer = (
       }
 
       await this.play();
+    },
+
+    unload() {
+      shouldAutoplayAfterLoad = false;
+
+      if (engine.available) {
+        suppressPauseEvent = true;
+        try {
+          engine.pause();
+        } finally {
+          suppressPauseEvent = false;
+        }
+        engine.clearSource();
+        engine.load();
+      }
+
+      const nextState = updateCurrentSource(null, "idle");
+      emitQueueChange(nextState);
     },
 
     seek(time) {
