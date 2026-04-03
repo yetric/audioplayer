@@ -38,6 +38,13 @@ Ship `1.0.0-beta.1` only when the library can replace the current `podcast-app` 
 - Angular and Web Components should consume the same core instance
 - React Native is a stretch goal and likely needs a custom engine contract
 
+### Internal Engine Boundary
+
+- the public `AudioPlayer` API stays browser-first for `beta.1`
+- browser playback now sits behind a small internal audio engine boundary
+- the browser engine remains the only shipped runtime engine today
+- any future React Native work should implement the same internal engine contract instead of forking the public API
+
 ## Beta Definition
 
 `1.0.0-beta.1` should include:

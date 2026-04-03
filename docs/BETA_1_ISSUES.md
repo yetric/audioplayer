@@ -158,9 +158,9 @@ Priority is based on one question only: does this unblock replacing the current 
 
 - Goal: explore whether the same high-level API can sit above a non-DOM engine.
 - Done when:
-  - an engine interface is extracted
-  - feasibility is documented
-  - browser core remains the default path
+  - a minimal internal audio engine interface is extracted from direct `HTMLAudioElement` usage
+  - browser playback remains the default shipped engine
+  - feasibility is documented without promising React Native support in `beta.1`
 
 ### Issue 015: Nice-to-have playback features
 

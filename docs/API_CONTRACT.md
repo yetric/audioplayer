@@ -232,3 +232,10 @@ Explicitly not required for `Issue 001`:
 - persistence implementation
 - React adapter implementation
 - React Native engine abstraction
+
+## Internal Engine Note
+
+- The public contract remains `AudioPlayer`, not an exported engine interface
+- The current implementation isolates browser audio behavior behind an internal engine boundary
+- That boundary exists to keep future non-DOM exploration, such as React Native, from changing the public player API too early
+- `beta.1` still ships only the browser engine

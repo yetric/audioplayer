@@ -228,6 +228,44 @@ const DEFAULT_PROGRESS_REPORT_INTERVAL_MS = 5000;
 const DEFAULT_MEDIA_SESSION_ARTWORK_SIZES = [96, 128, 192, 256, 384, 512];
 const DEFAULT_MEDIA_SESSION_SEEK_OFFSET_SECONDS = 10;
 
+type AudioEngineEventName =
+  | "loadedmetadata"
+  | "timeupdate"
+  | "progress"
+  | "play"
+  | "pause"
+  | "seeked"
+  | "ratechange"
+  | "volumechange"
+  | "ended"
+  | "error";
+
+interface AudioEngineSnapshot {
+  currentTime: number;
+  duration: number;
+  buffered: number;
+  rate: number;
+  volume: number;
+  muted: boolean;
+}
+
+interface AudioEngine {
+  readonly available: boolean;
+  getSnapshot(durationHint?: number): AudioEngineSnapshot;
+  getRuntimeError(): unknown;
+  on(eventName: AudioEngineEventName, listener: EventListener): () => void;
+  setSource(src: string): void;
+  clearSource(): void;
+  load(): void;
+  play(): Promise<void>;
+  pause(): void;
+  setCurrentTime(time: number): void;
+  setPlaybackRate(rate: number): void;
+  setVolume(volume: number): void;
+  setMuted(muted: boolean): void;
+  destroy(): void;
+}
+
 const createInitialState = (
   options: CreateAudioPlayerOptions,
 ): AudioPlayerState => ({
@@ -368,6 +406,137 @@ const createAudioElement = (): HTMLAudioElement | null => {
   return new Audio();
 };
 
+const createUnavailableAudioEngine = (): AudioEngine => {
+  const unavailableError = (): AudioPlayerRuntimeError =>
+    createPlayerError(
+      "UNSUPPORTED_ENVIRONMENT",
+      "HTMLAudioElement is not available in this environment.",
+    );
+
+  return {
+    available: false,
+    getSnapshot(durationHint) {
+      return {
+        currentTime: 0,
+        duration: durationHint ?? 0,
+        buffered: 0,
+        rate: 1,
+        volume: 1,
+        muted: false,
+      };
+    },
+    getRuntimeError() {
+      return unavailableError();
+    },
+    on() {
+      return () => {};
+    },
+    setSource() {
+      throw unavailableError();
+    },
+    clearSource() {
+      throw unavailableError();
+    },
+    load() {
+      throw unavailableError();
+    },
+    play() {
+      throw unavailableError();
+    },
+    pause() {
+      throw unavailableError();
+    },
+    setCurrentTime() {
+      throw unavailableError();
+    },
+    setPlaybackRate() {
+      throw unavailableError();
+    },
+    setVolume() {
+      throw unavailableError();
+    },
+    setMuted() {
+      throw unavailableError();
+    },
+    destroy() {},
+  };
+};
+
+const createHtmlAudioEngine = (): AudioEngine => {
+  const audio = createAudioElement();
+  if (!audio) {
+    return createUnavailableAudioEngine();
+  }
+
+  audio.preload = "metadata";
+  const clearSource = (): void => {
+    const element = audio as HTMLAudioElement & {
+      removeAttribute?: (name: string) => void;
+    };
+    if (typeof element.removeAttribute === "function") {
+      element.removeAttribute("src");
+      return;
+    }
+
+    audio.src = "";
+  };
+
+  return {
+    available: true,
+    getSnapshot(durationHint) {
+      return {
+        currentTime: audio.currentTime,
+        duration: safeDuration(audio, durationHint),
+        buffered: safeBuffered(audio),
+        rate: audio.playbackRate,
+        volume: audio.volume,
+        muted: audio.muted,
+      };
+    },
+    getRuntimeError() {
+      return audio.error;
+    },
+    on(eventName, listener) {
+      audio.addEventListener(eventName, listener);
+      return () => {
+        audio.removeEventListener(eventName, listener);
+      };
+    },
+    setSource(src) {
+      audio.src = src;
+    },
+    clearSource() {
+      clearSource();
+    },
+    load() {
+      audio.load();
+    },
+    play() {
+      return audio.play();
+    },
+    pause() {
+      audio.pause();
+    },
+    setCurrentTime(time) {
+      audio.currentTime = time;
+    },
+    setPlaybackRate(rate) {
+      audio.playbackRate = rate;
+    },
+    setVolume(volume) {
+      audio.volume = volume;
+    },
+    setMuted(muted) {
+      audio.muted = muted;
+    },
+    destroy() {
+      audio.pause();
+      clearSource();
+      audio.load();
+    },
+  };
+};
+
 const isBrowserStorageAvailable = (): boolean =>
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
@@ -487,7 +656,7 @@ export const createAudioPlayer = (
   let shouldAutoplayAfterLoad = false;
   let suppressPauseEvent = false;
 
-  const audio = createAudioElement();
+  const engine = createHtmlAudioEngine();
   const subscribers = new Set<(nextState: AudioPlayerState) => void>();
   const eventListeners: {
     [K in AudioPlayerEventName]: Set<AudioPlayerEventListener<K>>;
@@ -555,23 +724,13 @@ export const createAudioPlayer = (
     }));
   };
 
-  const requireAudio = (): HTMLAudioElement => {
-    if (!audio) {
-      throw createPlayerError(
-        "UNSUPPORTED_ENVIRONMENT",
-        "HTMLAudioElement is not available in this environment.",
-      );
-    }
-
-    return audio;
-  };
-
   const syncAudioSnapshot = (
     statusOverride?: PlayerStatus,
   ): AudioPlayerState => {
-    const currentTime = audio?.currentTime ?? state.currentTime;
-    const duration = safeDuration(audio, state.currentSource?.durationHint);
-    const buffered = safeBuffered(audio);
+    const snapshot = engine.getSnapshot(state.currentSource?.durationHint);
+    const currentTime = snapshot.currentTime;
+    const duration = snapshot.duration;
+    const buffered = snapshot.buffered;
     const playedFraction =
       duration > 0 ? Math.min(1, Math.max(0, currentTime / duration)) : 0;
     const bufferedFraction =
@@ -590,9 +749,9 @@ export const createAudioPlayer = (
         playedFraction,
         bufferedFraction,
       },
-      rate: audio?.playbackRate ?? currentState.rate,
-      volume: audio?.volume ?? currentState.volume,
-      muted: audio?.muted ?? currentState.muted,
+      rate: snapshot.rate,
+      volume: snapshot.volume,
+      muted: snapshot.muted,
       status: statusOverride ?? currentState.status,
       error:
         statusOverride === "error" ? currentState.error : null,
@@ -706,17 +865,19 @@ export const createAudioPlayer = (
     source: AudioSource,
     autoplayAfterLoad: boolean,
   ): void => {
-    const media = requireAudio();
     shouldAutoplayAfterLoad = autoplayAfterLoad;
     suppressPauseEvent = true;
-    media.pause();
-    suppressPauseEvent = false;
-    media.src = source.src;
-    media.currentTime = 0;
-    media.playbackRate = state.rate;
-    media.volume = state.volume;
-    media.muted = state.muted;
-    media.load();
+    try {
+      engine.pause();
+    } finally {
+      suppressPauseEvent = false;
+    }
+    engine.setSource(source.src);
+    engine.setCurrentTime(0);
+    engine.setPlaybackRate(state.rate);
+    engine.setVolume(state.volume);
+    engine.setMuted(state.muted);
+    engine.load();
   };
 
   const loadInternal = async (
@@ -744,9 +905,8 @@ export const createAudioPlayer = (
   };
 
   const playLoadedAudio = async (): Promise<void> => {
-    const media = requireAudio();
     try {
-      await media.play();
+      await engine.play();
     } catch (cause) {
       setError(createPlayerError("PLAY_ERROR", "Failed to start playback.", cause));
     }
@@ -773,13 +933,8 @@ export const createAudioPlayer = (
     emit("ended", { source: endedState.currentSource, state: endedState });
   };
 
-  if (audio) {
-    audio.preload = "metadata";
-    audio.playbackRate = state.rate;
-    audio.volume = state.volume;
-    audio.muted = state.muted;
-
-    audio.addEventListener("loadedmetadata", () => {
+  const detachEngineListeners = [
+    engine.on("loadedmetadata", () => {
       if (destroyed || !state.currentSource) {
         return;
       }
@@ -789,9 +944,8 @@ export const createAudioPlayer = (
         shouldAutoplayAfterLoad = false;
         void playLoadedAudio();
       }
-    });
-
-    audio.addEventListener("timeupdate", () => {
+    }),
+    engine.on("timeupdate", () => {
       if (destroyed) {
         return;
       }
@@ -804,24 +958,21 @@ export const createAudioPlayer = (
         duration: nextState.duration,
         state: nextState,
       });
-    });
-
-    audio.addEventListener("progress", () => {
+    }),
+    engine.on("progress", () => {
       if (!destroyed) {
         syncAudioSnapshot();
       }
-    });
-
-    audio.addEventListener("play", () => {
+    }),
+    engine.on("play", () => {
       if (destroyed) {
         return;
       }
 
       const nextState = syncAudioSnapshot("playing");
       emit("play", { source: nextState.currentSource, state: nextState });
-    });
-
-    audio.addEventListener("pause", () => {
+    }),
+    engine.on("pause", () => {
       if (destroyed || suppressPauseEvent) {
         return;
       }
@@ -830,9 +981,8 @@ export const createAudioPlayer = (
         state.status === "ended" ? "ended" : state.currentSource ? "paused" : "idle";
       const nextState = syncAudioSnapshot(nextStatus);
       emit("pause", { source: nextState.currentSource, state: nextState });
-    });
-
-    audio.addEventListener("seeked", () => {
+    }),
+    engine.on("seeked", () => {
       if (destroyed) {
         return;
       }
@@ -844,18 +994,16 @@ export const createAudioPlayer = (
         duration: nextState.duration,
         state: nextState,
       });
-    });
-
-    audio.addEventListener("ratechange", () => {
+    }),
+    engine.on("ratechange", () => {
       if (destroyed) {
         return;
       }
 
       const nextState = syncAudioSnapshot();
       emit("ratechange", { rate: nextState.rate, state: nextState });
-    });
-
-    audio.addEventListener("volumechange", () => {
+    }),
+    engine.on("volumechange", () => {
       if (destroyed) {
         return;
       }
@@ -866,13 +1014,11 @@ export const createAudioPlayer = (
         muted: nextState.muted,
         state: nextState,
       });
-    });
-
-    audio.addEventListener("ended", () => {
+    }),
+    engine.on("ended", () => {
       void handlePlaybackEnded();
-    });
-
-    audio.addEventListener("error", () => {
+    }),
+    engine.on("error", () => {
       if (destroyed) {
         return;
       }
@@ -881,11 +1027,11 @@ export const createAudioPlayer = (
         createPlayerError(
           "LOAD_ERROR",
           "Audio element reported a playback error.",
-          audio.error,
+          engine.getRuntimeError(),
         ),
       );
-    });
-  }
+    }),
+  ];
 
   return {
     getState,
@@ -948,12 +1094,12 @@ export const createAudioPlayer = (
     },
 
     pause() {
-      if (!audio) {
+      if (!engine.available) {
         return;
       }
 
       shouldAutoplayAfterLoad = false;
-      audio.pause();
+      engine.pause();
     },
 
     async toggle() {
@@ -966,14 +1112,14 @@ export const createAudioPlayer = (
     },
 
     seek(time) {
-      if (!audio || !state.currentSource) {
+      if (!state.currentSource) {
         setError(
           createPlayerError("SEEK_ERROR", "Cannot seek without an active source."),
         );
         return;
       }
 
-      const max = safeDuration(audio, state.currentSource.durationHint);
+      const max = engine.getSnapshot(state.currentSource.durationHint).duration;
       const normalized = Math.max(
         0,
         max > 0 ? Math.min(time, max) : (isFiniteNumber(time) ? time : 0),
@@ -981,14 +1127,14 @@ export const createAudioPlayer = (
       emit("seeking", { from: state.currentTime, to: normalized, state });
 
       try {
-        audio.currentTime = normalized;
+        engine.setCurrentTime(normalized);
       } catch (cause) {
         setError(normalizePlayerError("SEEK_ERROR", "Failed to seek audio.", cause));
       }
     },
 
     setRate(rate) {
-      if (!audio) {
+      if (!engine.available) {
         setError(
           createPlayerError("INVALID_RATE", "Audio element is unavailable."),
         );
@@ -1002,13 +1148,13 @@ export const createAudioPlayer = (
         return;
       }
 
-      audio.playbackRate = rate;
+      engine.setPlaybackRate(rate);
       clearError();
       syncAudioSnapshot();
     },
 
     setVolume(volume) {
-      if (!audio) {
+      if (!engine.available) {
         setError(
           createPlayerError("INVALID_VOLUME", "Audio element is unavailable."),
         );
@@ -1022,17 +1168,17 @@ export const createAudioPlayer = (
         return;
       }
 
-      audio.volume = volume;
+      engine.setVolume(volume);
       clearError();
       syncAudioSnapshot();
     },
 
     setMuted(muted) {
-      if (!audio) {
+      if (!engine.available) {
         return;
       }
 
-      audio.muted = muted;
+      engine.setMuted(muted);
       clearError();
       syncAudioSnapshot();
     },
@@ -1095,13 +1241,13 @@ export const createAudioPlayer = (
           await loadInternal(nextState.currentSource, queueOptions.autoplay === true);
           const syncedState = setQueueState(items, startIndex);
           emitQueueChange(syncedState);
-        } else if (audio) {
+        } else if (engine.available) {
           shouldAutoplayAfterLoad = false;
           suppressPauseEvent = true;
-          audio.pause();
+          engine.pause();
           suppressPauseEvent = false;
-          audio.removeAttribute("src");
-          audio.load();
+          engine.clearSource();
+          engine.load();
         }
       } catch (cause) {
         setError(
@@ -1231,14 +1377,12 @@ export const createAudioPlayer = (
 
       destroyed = true;
       shouldAutoplayAfterLoad = false;
-
-      if (audio) {
-        suppressPauseEvent = true;
-        audio.pause();
-        suppressPauseEvent = false;
-        audio.removeAttribute("src");
-        audio.load();
+      for (const detach of detachEngineListeners) {
+        detach();
       }
+      suppressPauseEvent = true;
+      engine.destroy();
+      suppressPauseEvent = false;
 
       const nextState = setState(() => createInitialState(options));
       emit("destroy", { state: nextState });

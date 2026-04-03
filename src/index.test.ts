@@ -172,4 +172,15 @@ describe("createAudioPlayer", () => {
     expect(player.getState().currentSourceId).toBe("episode-1");
     expect(player.getState().status).not.toBe("ended");
   });
+
+  it("surfaces unsupported environments through the typed error state", async () => {
+    vi.stubGlobal("Audio", undefined);
+
+    const player = createAudioPlayer();
+
+    await player.load(episodeOne);
+
+    expect(player.getState().status).toBe("error");
+    expect(player.getState().error?.code).toBe("UNSUPPORTED_ENVIRONMENT");
+  });
 });
