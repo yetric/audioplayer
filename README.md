@@ -6,7 +6,7 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-Browser-first core package under active development.
+`1.0.0-beta.1` is the current intended npm beta release line.
 
 Recommended current focus:
 
