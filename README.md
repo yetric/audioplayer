@@ -2,6 +2,49 @@
 
 Headless TypeScript audio player for modern browsers.
 
+[GitHub](https://github.com/yetric/audioplayer)
+
+## Status
+
+Browser-first core package under active development.
+
+Recommended current focus:
+
+- use the browser package
+- validate it in `podcast-app`
+- treat React Native support as later work
+
+## Install
+
+```bash
+npm install @yetric/audioplayer
+```
+
+React usage:
+
+```bash
+npm install @yetric/audioplayer react
+```
+
+## Quick Start
+
+```ts
+import { createAudioPlayer } from "@yetric/audioplayer";
+
+const player = createAudioPlayer();
+
+await player.play({
+  id: "episode-42",
+  src: "https://cdn.example.com/episode-42.mp3",
+  title: "Episode 42",
+  artist: "Podcast Name",
+});
+
+player.subscribe((state) => {
+  console.log(state.status, state.progress.playedFraction);
+});
+```
+
 The first milestone is not "generic media player." It is "good enough to replace the current `podcast-app` audio layer with a simpler, testable, framework-agnostic library."
 
 ## Product Direction
@@ -85,6 +128,12 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - [`docs/MIGRATION_PODCAST_APP.md`](./docs/MIGRATION_PODCAST_APP.md)
 - [`docs/ANGULAR_EXAMPLE.md`](./docs/ANGULAR_EXAMPLE.md)
 - [`docs/WEB_COMPONENT_EXAMPLE.md`](./docs/WEB_COMPONENT_EXAMPLE.md)
+
+## External Docs
+
+- Docusaurus site source: [`website/`](./website/)
+- Local dev: `npm run docs:start`
+- Production build: `npm run docs:build`
 
 ## Examples
 
