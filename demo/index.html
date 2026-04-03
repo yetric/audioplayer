@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@yetric/audioplayer Demo</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px;
+        background: #f3f7f6;
+        color: #12302d;
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        display: grid;
+        gap: 24px;
+      }
+
+      section {
+        background: #ffffff;
+        border: 1px solid #d8e5e3;
+        border-radius: 16px;
+        padding: 20px;
+      }
+
+      h1,
+      h2 {
+        margin-top: 0;
+      }
+
+      .controls,
+      .queue {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      button,
+      select {
+        font: inherit;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid #9bbab5;
+        background: #125f58;
+        color: #ffffff;
+        cursor: pointer;
+      }
+
+      button.secondary,
+      select.secondary {
+        background: #ffffff;
+        color: #125f58;
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px;
+        overflow: auto;
+        border-radius: 12px;
+        background: #0f1f1d;
+        color: #dff6f2;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #081312;
+          color: #dff6f2;
+        }
+
+        section {
+          background: #10211f;
+          border-color: #23413c;
+        }
+
+        button.secondary,
+        select.secondary {
+          background: #10211f;
+          color: #8fe0d5;
+          border-color: #34635c;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>@yetric/audioplayer demo</h1>
+        <p>Use this page to test playback, queue navigation, persistence, progress reporting, and Media Session integration.</p>
+      </section>
+
+      <section>
+        <h2>Playback</h2>
+        <div class="controls">
+          <button id="load-first" class="secondary">Load Episode 1</button>
+          <button id="play">Play</button>
+          <button id="pause" class="secondary">Pause</button>
+          <button id="seek-30" class="secondary">Seek to 30s</button>
+          <button id="previous" class="secondary">Previous</button>
+          <button id="next" class="secondary">Next</button>
+          <select id="rate" class="secondary">
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+      </section>
+
+      <section>
+        <h2>Queue</h2>
+        <div class="queue">
+          <button id="load-queue">Load Queue</button>
+          <button id="repeat-off" class="secondary">Repeat Off</button>
+          <button id="repeat-all" class="secondary">Repeat All</button>
+          <button id="clear-queue" class="secondary">Clear Queue</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>State</h2>
+        <pre id="state"></pre>
+      </section>
+
+      <section>
+        <h2>Progress reports</h2>
+        <pre id="progress"></pre>
+      </section>
+    </main>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

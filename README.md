@@ -135,6 +135,12 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - Local dev: `npm run docs:start`
 - Production build: `npm run docs:build`
 
+## Local Demo
+
+- Start demo: `npm run demo:start`
+- Build demo: `npm run demo:build`
+- Preview demo build: `npm run demo:preview`
+
 ## Examples
 
 - [`examples/vanilla/index.html`](./examples/vanilla/index.html)

@@ -35,6 +35,9 @@
     "build": "tsup",
     "check": "tsc --noEmit",
     "dev": "tsup --watch",
+    "demo:start": "vite demo",
+    "demo:build": "vite build demo",
+    "demo:preview": "vite preview demo",
     "docs:start": "npm run start --workspace website",
     "docs:build": "npm run build --workspace website",
     "docs:serve": "npm run serve --workspace website",
@@ -69,6 +72,7 @@
     "react": "^19.2.0",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
+    "vite": "^7.3.0",
     "vitest": "^4.0.0"
   },
   "peerDependencies": {
