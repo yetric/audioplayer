@@ -41,6 +41,7 @@
     "docs:start": "npm run start --workspace website",
     "docs:build": "npm run build --workspace website",
     "docs:serve": "npm run serve --workspace website",
+    "prepare": "npm run build",
     "prepack": "npm run build",
     "test": "vitest run"
   },
