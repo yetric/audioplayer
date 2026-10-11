@@ -24,29 +24,15 @@ npm run docs:build
 
 ## Release shape
 
-- Use prerelease versions until the package is ready for public beta.
 - Update `CHANGELOG.md`.
 - Create a GitHub release.
 - The publish workflow will publish to npm when the release is published and `NPM_TOKEN` is configured.
 
-## Next release step
-
-Current repo state:
-
-- `1.0.0-beta.1` is prepared locally and committed on `main`
-- package contents were verified with `npm pack --dry-run`
-- tarball install smoke test passed from a clean temp project
-- direct `npm publish` from this machine is currently blocked because npm auth is not configured
-
-Next actions:
+## Publishing
 
 ```bash
 npm login
-npm whoami
-npm publish --tag beta
+npm publish
 ```
 
-After publish:
-
-- update `podcast-app` to depend on `@yetric/audioplayer@1.0.0-beta.1`
-- replace the temporary GitHub dependency there
+npm requires 2FA (passkey) for publishing. Use `--tag <name>` for prereleases.

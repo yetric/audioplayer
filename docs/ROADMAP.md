@@ -2,7 +2,7 @@
 
 ## Target
 
-Ship `1.0.0-beta.1` only when the library can replace the current `podcast-app` audio context with a cleaner headless API and no meaningful feature regression in core listening flows.
+Ship `1.0.0` only when the library can replace the current `podcast-app` audio context with a cleaner headless API and no meaningful feature regression in core listening flows.
 
 ## Principles
 
@@ -18,16 +18,16 @@ Ship `1.0.0-beta.1` only when the library can replace the current `podcast-app` 
 
 - `createAudioPlayer(options?)`
 - wraps one `HTMLAudioElement`
-- accepts a single source per queue item in `beta.1`
+- accepts a single source per queue item in `1.0`
 - requires stable caller-provided IDs for sources and queue items
 - exposes commands: `load`, `play`, `pause`, `toggle`, `seek`, `setRate`, `setVolume`, `destroy`
 - supports auto-load on `play(...)` for common app flows
-- treats one active player instance per page as the intended `beta.1` deployment model
+- treats one active player instance per page as the intended `1.0` deployment model
 - preserves the ended item and exposes `status: "ended"` instead of resetting silently
 - emits state changes through `subscribe(listener)`
 - exposes typed events for integration work such as progress, queue changes, and playback lifecycle
 - imperative-first API shape, with optional plugins attached after construction or through small focused options
-- built-in queue support for next/previous/autoplay in `beta.1`
+- built-in queue support for next/previous/autoplay in `1.0`
 - opt-in persistence plugin, with `localStorage` first and pluggable storage later
 - optional Media Session plugin
 
@@ -40,14 +40,14 @@ Ship `1.0.0-beta.1` only when the library can replace the current `podcast-app` 
 
 ### Internal Engine Boundary
 
-- the public `AudioPlayer` API stays browser-first for `beta.1`
+- the public `AudioPlayer` API stays browser-first for `1.0`
 - browser playback now sits behind a small internal audio engine boundary
 - the browser engine remains the only shipped runtime engine today
 - any future React Native work should implement the same internal engine contract instead of forking the public API
 
-## Beta Definition
+## 1.0 Definition
 
-`1.0.0-beta.1` should include:
+`1.0.0` should include:
 
 - stable core command API
 - serializable state model
@@ -58,7 +58,7 @@ Ship `1.0.0-beta.1` only when the library can replace the current `podcast-app` 
 - examples for vanilla JS and React
 - test coverage for core behavior
 
-## Not Beta Blockers
+## Not 1.0 Blockers
 
 - waveform UI
 - skip silence

@@ -1,6 +1,6 @@
 # API Contract
 
-This document freezes the intended `Issue 001` contract for `1.0.0-beta.1`.
+This document freezes the intended `Issue 001` contract for `1.0.0`.
 
 It is not the full implementation spec for browser playback internals. It is the public TypeScript surface and the behavior a developer should build against.
 
@@ -9,7 +9,7 @@ The current implementation target is a browser `HTMLAudioElement` engine. Non-br
 ## Core Principles
 
 - Imperative instance API first
-- One active player instance per app/page is the intended `beta.1` model
+- One active player instance per app/page is the intended `1.0` model
 - Queue is built into the player instance
 - Persistence is opt-in
 - One flat source object per item
@@ -114,7 +114,7 @@ Primary exported types:
 
 - Clamps to `>= 0`
 - Clamps to duration when duration is known
-- `beta.1` contract should not throw for normal out-of-range values
+- `1.0` contract should not throw for normal out-of-range values
 
 ### `setRate(rate)`
 
@@ -221,9 +221,9 @@ Important event families:
 - `error`
 - `destroy`
 
-## Beta Boundaries
+## 1.0 Boundaries
 
-Explicitly in scope for `beta.1`:
+Explicitly in scope for `1.0`:
 
 - browser-first playback
 - built-in queue
@@ -245,4 +245,4 @@ Explicitly not required for `Issue 001`:
 - The public contract remains `AudioPlayer`, not an exported engine interface
 - The current implementation isolates browser audio behavior behind an internal engine boundary
 - That boundary exists to keep future non-DOM exploration, such as React Native, from changing the public player API too early
-- `beta.1` still ships only the browser engine
+- `1.0` still ships only the browser engine

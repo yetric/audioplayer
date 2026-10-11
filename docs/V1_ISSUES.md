@@ -1,4 +1,4 @@
-# Pre-Beta Issue List
+# Pre-1.0 Issue List
 
 Priority is based on one question only: does this unblock replacing the current `podcast-app` player?
 
@@ -14,10 +14,10 @@ Priority is based on one question only: does this unblock replacing the current 
   - `docs/API_CONTRACT.md`
 - Done when:
   - imperative instance API is the primary public model
-  - `load()` and queue items use one flat source object in `beta.1`
+  - `load()` and queue items use one flat source object in `1.0`
   - stable caller-provided IDs are required
   - `play(...)` can auto-load an item for the common case
-  - the intended `beta.1` usage model is one active player instance per page
+  - the intended `1.0` usage model is one active player instance per page
   - playback end preserves the current item with `status: "ended"` when not auto-advancing
   - public types exist for source metadata, player state, and events
   - `subscribe(state)` is paired with typed event listeners for side effects
@@ -52,7 +52,7 @@ Priority is based on one question only: does this unblock replacing the current 
   - playlist navigation
   - autoplay next episode on `ended`
 - Done when:
-  - queue is part of the player instance API for `beta.1`
+  - queue is part of the player instance API for `1.0`
   - queue supports set, append, remove, clear, next, previous
   - previous behavior supports "restart current if more than N seconds in"
   - repeat modes are supported at least as `off | one | all`
@@ -161,7 +161,7 @@ Priority is based on one question only: does this unblock replacing the current 
 - Done when:
   - a minimal internal audio engine interface is extracted from direct `HTMLAudioElement` usage
   - browser playback remains the default shipped engine
-  - feasibility is documented without promising React Native support in `beta.1`
+  - feasibility is documented without promising React Native support in `1.0`
 
 ### Issue 015: Nice-to-have playback features
 
@@ -170,4 +170,4 @@ Priority is based on one question only: does this unblock replacing the current 
   - skip silence
   - advanced speed presets
   - share-position helpers
-- Note: useful, but not required for `beta.1` unless `podcast-app` proves they are blocking
+- Note: useful, but not required for `1.0` unless `podcast-app` proves they are blocking

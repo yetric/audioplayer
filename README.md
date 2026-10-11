@@ -6,7 +6,7 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.0.0-beta.1` is the current intended npm beta release line.
+`1.0.0` is the current stable release line.
 
 Recommended current focus:
 
@@ -52,20 +52,20 @@ The first milestone is not "generic media player." It is "good enough to replace
 - Browser-first, using `HTMLAudioElement` as the primary engine
 - Headless core API, so React/Angular/Web Components/vanilla JS can all use the same package
 - Imperative instance API first: `const player = createAudioPlayer()`
-- Queue management lives inside the player instance for `beta.1`
+- Queue management lives inside the player instance for `1.0`
 - Persistence is opt-in, with `localStorage` as the first storage adapter
-- `load()` accepts one flat audio source object in `beta.1`
+- `load()` accepts one flat audio source object in `1.0`
 - `subscribe(state)` is the primary UI model, with typed events for side effects
 - Every source / queue item must have a stable caller-provided `id`
 - `play(...)` may auto-load the requested item instead of requiring a separate `load()`
-- `beta.1` is optimized for one active player instance per app/page
+- `1.0` is optimized for one active player instance per app/page
 - When playback finishes without auto-advancing, the current item remains loaded with `status: "ended"`
 - Strong TypeScript types without making vanilla JS usage awkward
-- React Native compatibility treated as a later adapter problem, not a `beta` blocker
+- React Native compatibility treated as a later adapter problem, not a 1.0 blocker
 
-## Beta 1 Goal
+## 1.0 Goal
 
-`1.0.0-beta.1` is ready when `podcast-app` can use this package for:
+`1.0.0` is ready when `podcast-app` can use this package for:
 
 - load / replace a source
 - play / pause
@@ -118,7 +118,7 @@ The public API should stay small. Extra behavior like persistence, progress ping
 ## Repo Docs
 
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md)
-- [`docs/BETA_1_ISSUES.md`](./docs/BETA_1_ISSUES.md)
+- [`docs/V1_ISSUES.md`](./docs/V1_ISSUES.md)
 - [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
 - [`docs/GETTING_STARTED.md`](./docs/GETTING_STARTED.md)
 - [`docs/CORE_GUIDE.md`](./docs/CORE_GUIDE.md)
