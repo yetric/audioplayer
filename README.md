@@ -6,7 +6,7 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.0.0` is the current stable release line.
+`1.1.0` is the current stable release.
 
 Recommended current focus:
 

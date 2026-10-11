@@ -6,6 +6,10 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## Unreleased
 
+- No unreleased changes yet
+
+## 1.1.0 - 2026-10-11
+
 - Fixes `AudioPlayerProvider` destroying a provider-created player under React StrictMode, which left the player unusable in development
 - Publish workflow uses npm trusted publishing (OIDC) and derives the dist-tag from the version
 - Adds tests for Media Session, the React adapter, and more queue, persistence and progress behavior
