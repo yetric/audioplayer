@@ -115,6 +115,13 @@ Primary exported types:
 - Clamps to `>= 0`
 - Clamps to duration when duration is known
 - `1.0` contract should not throw for normal out-of-range values
+- Sets a `SEEK_ERROR` without an active source, or when `time` is `NaN`
+
+### `skip(seconds)`
+
+- Seeks relative to the current position, so negative values go back
+- Follows the clamping and errors of `seek(time)`
+- While the duration is unknown, a forward skip advances from the current time with no upper limit
 
 ### `setRate(rate)`
 
