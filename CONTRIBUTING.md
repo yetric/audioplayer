@@ -22,12 +22,6 @@ npm run docs:build
 - Update docs when public behavior changes.
 - Add or update tests when behavior changes.
 
-## Release shape
-
-- Update `CHANGELOG.md`.
-- Create a GitHub release.
-- The publish workflow will publish to npm when the release is published and `NPM_TOKEN` is configured.
-
 ## Publishing
 
 Releases publish from CI through npm trusted publishing (OIDC), with no stored token:

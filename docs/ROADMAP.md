@@ -66,3 +66,23 @@ Ship `1.0.0` only when the library can replace the current `podcast-app` audio c
 - annotations
 - custom renderer packages
 - full React Native support
+
+## Release Plan After 1.0
+
+Every 1.x release is additive and ships a prerelease first. Each is validated in `podcast-app` where the work applies to it. Platform-specific work (for example Angular or Web Components) is validated with its example project or another named consumer. Items with no named consumer get dropped. 2.0 is the only release that may break.
+
+| Release | Theme | Details |
+| ------- | ----- | ------- |
+| 1.1 | Quality and publishing | Shipped. StrictMode fix, more tests, OIDC publishing |
+| 1.2 | Less glue code | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
+| 1.3 | Timeline events and listening features | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
+| 1.4 | Resilience and reach | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
+| 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md), [`DOCS_PLAN.md`](./DOCS_PLAN.md) |
+
+Rules:
+
+- No breaking changes in 1.x. Collect them in `RELEASE_2_0.md`.
+- Every feature needs a named consumer need. Hypotheses are marked as such in the release docs.
+- Keep the public API small. Prefer opt-in attach functions and optional fields.
+- 2.0 has a documentation, LLM support and demo quality bar, with groundwork in each 1.x release. See [`DOCS_PLAN.md`](./DOCS_PLAN.md).
+- The library is open source. Community and adoption work is tracked in [`OPEN_SOURCE.md`](./OPEN_SOURCE.md) and scheduled into these releases.

@@ -119,6 +119,13 @@ The public API should stay small. Extra behavior like persistence, progress ping
 
 - [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 - [`docs/V1_ISSUES.md`](./docs/V1_ISSUES.md)
+- [`docs/RELEASE_1_2.md`](./docs/RELEASE_1_2.md)
+- [`docs/RELEASE_1_3.md`](./docs/RELEASE_1_3.md)
+- [`docs/RELEASE_1_4.md`](./docs/RELEASE_1_4.md)
+- [`docs/RELEASE_2_0.md`](./docs/RELEASE_2_0.md)
+- [`docs/DESIGN_CUES.md`](./docs/DESIGN_CUES.md)
+- [`docs/DOCS_PLAN.md`](./docs/DOCS_PLAN.md)
+- [`docs/OPEN_SOURCE.md`](./docs/OPEN_SOURCE.md)
 - [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
 - [`docs/GETTING_STARTED.md`](./docs/GETTING_STARTED.md)
 - [`docs/CORE_GUIDE.md`](./docs/CORE_GUIDE.md)
