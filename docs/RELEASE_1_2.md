@@ -21,7 +21,7 @@ Taken from reading `podcast-app/src/context/audio.tsx` and `src/components/playe
 
 | Item | Priority | Size | Notes |
 | ---- | -------- | ---- | ----- |
-| `skip(seconds)` on the player, clamped to `0..duration` | P0 | S | Media Session already does this internally. Expose it. |
+| `skip(seconds)` on the player, clamped at 0 and, when the duration is known, at the duration | P0 | S | Media Session already does this internally. Keep its unknown-duration fallback: before metadata loads, a forward skip advances from the current time instead of seeking to 0. Expose it. |
 | React provider accepts plugin options (`persistence`, `mediaSession`, `progressReporter`) and tears them down itself | P0 | M | Goal: `podcast-app` uses `AudioPlayerProvider` directly |
 | `useAudioPlayerState(selector)` with a selector and equality check | P0 | S | Stops components re-rendering on every `timeupdate` |
 | Throttled progress hook, for example `useAudioPlayerProgress({ intervalMs })` | P1 | S | Replaces the `setInterval` polling in the player UI |

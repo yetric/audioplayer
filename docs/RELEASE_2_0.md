@@ -19,7 +19,7 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 - Export a stable `AudioEngine` interface and document it.
 - Ship a Web Audio engine for features `HTMLAudioElement` cannot do: skip silence, volume boost, loudness normalization.
 - Ship a React Native engine as a separate package, `@yetric/audioplayer-rn`, on the same contract.
-- Breaking candidate: engine selection becomes an explicit option instead of an implicit default.
+- Engine selection is an option with the browser engine as the default, so it is additive and could ship in 1.x once the contract is public. Not a breaking change.
 
 ### 2. Multiple sources and multiple players
 
@@ -70,7 +70,6 @@ Collect them as they come up during 1.x. Do not break anything in 1.x.
 
 | Change | Why | Migration |
 | ------ | --- | --------- |
-| Explicit engine option | Pluggable engines | Default stays the browser engine |
 | `sources[]` replaces `src` | Format fallback | Codemod or helper |
 | Drop CJS | Smaller package, simpler exports | Use ESM or a bundler |
 | Status model redesign if the 1.4 buffering flag proves limiting | Clearer states | Documented mapping |

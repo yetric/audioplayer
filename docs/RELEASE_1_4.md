@@ -10,7 +10,7 @@ Make playback behave well on bad networks and offline, and make the library easi
 
 Repo evidence:
 
-- The state model has `loading`, `ready`, `playing`, `paused`, `ended` and `error`. It has no distinct state for stalled or rebuffering playback, so a UI cannot tell a slow network from a paused player.
+- The state model has `idle`, `loading`, `ready`, `playing`, `paused`, `ended` and `error`. It has no distinct state for stalled or rebuffering playback, so a UI cannot tell a slow network from a paused player.
 - `podcast-app` is a PWA (`vite-plugin-pwa` and Workbox are in its build), so offline and cache behavior is relevant to it.
 - Error codes are typed, but a failed load needs a manual retry by the caller.
 - Angular and Web Component usage exists only as documentation (`ANGULAR_EXAMPLE.md`, `WEB_COMPONENT_EXAMPLE.md`).
@@ -58,4 +58,4 @@ Hypotheses to validate:
 
 ## Release gate
 
-Publish `1.4.0-beta.1`, test on a throttled network and offline in `podcast-app`, then promote.
+Publish `1.4.0-beta.1`, test on a throttled network and offline in `podcast-app`, validate Web Component and Angular work with their example projects, then promote.

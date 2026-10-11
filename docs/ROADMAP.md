@@ -69,7 +69,7 @@ Ship `1.0.0` only when the library can replace the current `podcast-app` audio c
 
 ## Release Plan After 1.0
 
-Each release is additive, ships a prerelease first, and is validated in `podcast-app` before promotion. Items that `podcast-app` does not use get dropped.
+Every 1.x release is additive and ships a prerelease first. Each is validated in `podcast-app` where the work applies to it. Platform-specific work (for example Angular or Web Components) is validated with its example project or another named consumer. Items with no named consumer get dropped. 2.0 is the only release that may break.
 
 | Release | Theme | Details |
 | ------- | ----- | ------- |

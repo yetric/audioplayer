@@ -39,12 +39,12 @@ Validate each with `podcast-app` usage data or listener feedback before committi
 | Per-source or per-show playback rate memory | P1 | S | Builds on the positions store |
 | Played threshold: mark a source as played at a configurable fraction | P1 | S | Reported through the progress hooks |
 | Share-position helper: build and parse a `?t=` style timestamp | P2 | S | Pure helpers, no player coupling |
-| Skip silence | P2 | L | Needs Web Audio. Parked until the 2.0 engine work, see `RELEASE_2_0.md`. |
 
 Other users (see [`OPEN_SOURCE.md`](./OPEN_SOURCE.md)): shuffle and A-B loop are likely asks from music and language-learning users. Build them only if demand is collected through Discussions or issues. Discussions and a "use case" issue template ship in this release.
 
 ## Out of scope
 
+- Skip silence. It needs Web Audio, so it waits for the 2.0 engine work (see `RELEASE_2_0.md`).
 - Transcripts and annotations (long shot, 2.0 area).
 - Waveform UI.
 - Any network or sync behavior. The library does not own network requests.
@@ -70,4 +70,4 @@ This release is large. If it runs long, ship cues, chapters and lifecycle events
 
 ## Release gate
 
-Publish `1.3.0-beta.1`. Build a visible demo in `podcast-app` (chapter art and linked notes appearing in step with the audio), drop any feature that the app does not use, then promote.
+Publish `1.3.0-beta.1`. Build a visible demo in `podcast-app` (chapter art and linked notes appearing in step with the audio), drop any feature that has no named consumer, then promote.
