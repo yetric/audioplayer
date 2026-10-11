@@ -28,6 +28,8 @@ Taken from reading `podcast-app/src/context/audio.tsx` and `src/components/playe
 | Exported default rate presets and a `cycleRate(presets?)` helper | P1 | S | Only if `podcast-app` still hand-rolls it after the other items |
 | Browser-level tests with a real runner, covering load, seek, ended, auto-advance | P1 | L | Closes Issue 011. Run in CI. |
 | Recipes and the React guide updated to show the provider with plugins | P1 | S | Docs are part of done |
+| Publish the docs site, remove template leftovers, merge `docs/` and `website/docs/` into one source | P0 | M | The site is not published today. See `DOCS_PLAN.md`. |
+| JSDoc on every public symbol | P0 | M | Helps editors and assistants |
 | README rewrite for newcomers, with a scope statement | P0 | S | See `OPEN_SOURCE.md` |
 | Support matrix, `engines` review and a stability policy | P0 | S | Matrix is backed by the browser tests |
 | Server rendering recipe with a Node import test, bundle size budget in CI, `CODE_OF_CONDUCT.md` | P1 | S | See `OPEN_SOURCE.md` |

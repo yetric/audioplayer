@@ -32,6 +32,8 @@ Validate each with `podcast-app` usage data or listener feedback before committi
 | Source lifecycle events: `sourceready`, `sourcestart`, `sourceend`, plus `waiting` and `playing` shared with 1.4 | P0 | S | Separates "new sound requested" from "new sound ready" |
 | React hooks: `useActiveCues`, `useCurrentChapter`, `useAudioPlayerTime` | P1 | S | Re-render only on change |
 | Frame-rate clock helper for animation, active only while playing | P1 | S | Cheap `getCurrentTime()` read per frame |
+| Generated API reference, docs site search, snippet compile checks in CI | P1 | M | See `DOCS_PLAN.md` |
+| Flagship demo: podcast player with chapter art and show-note cards, in a hosted demo gallery | P1 | M | Doubles as the demand check for cues |
 | Sleep timer: stop after N minutes or at end of episode, exposed in state with an event | P1 | M | Opt-in plugin, same attach pattern as persistence |
 | Per-source position memory: a positions store keyed by source `id`, with expiry | P1 | M | Separate from the single-session persistence. Pluggable adapter. |
 | Per-source or per-show playback rate memory | P1 | S | Builds on the positions store |

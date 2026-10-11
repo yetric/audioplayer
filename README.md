@@ -124,6 +124,7 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - [`docs/RELEASE_1_4.md`](./docs/RELEASE_1_4.md)
 - [`docs/RELEASE_2_0.md`](./docs/RELEASE_2_0.md)
 - [`docs/DESIGN_CUES.md`](./docs/DESIGN_CUES.md)
+- [`docs/DOCS_PLAN.md`](./docs/DOCS_PLAN.md)
 - [`docs/OPEN_SOURCE.md`](./docs/OPEN_SOURCE.md)
 - [`docs/API_CONTRACT.md`](./docs/API_CONTRACT.md)
 - [`docs/GETTING_STARTED.md`](./docs/GETTING_STARTED.md)

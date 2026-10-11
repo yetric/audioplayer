@@ -56,6 +56,14 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 - A second maintainer or an npm organization, and a documented release and triage process, before wider adoption.
 - Support policy for 1.x after 2.0 ships (proposal: security and bug fixes for a stated period).
 
+## Launch quality bar
+
+2.0 does not ship on features alone. It ships when these are true. Details and the path through 1.x are in [`DOCS_PLAN.md`](./DOCS_PLAN.md).
+
+- **World-class online documentation:** a published, searchable, versioned site with quickstarts per framework, concepts, recipes, a generated API reference, troubleshooting, and a 1.x to 2.0 migration guide.
+- **LLM support:** `llms.txt` and Markdown pages, JSDoc on every public symbol, usage notes in the package, tested examples, and evals that track how well assistants build with the docs.
+- **Really good demos:** a hosted gallery led by a flagship chapters and cards player, own-hosted licensed audio, and starters for each framework.
+
 ## Candidate breaking changes
 
 Collect them as they come up during 1.x. Do not break anything in 1.x.

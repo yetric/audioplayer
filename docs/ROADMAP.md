@@ -77,11 +77,12 @@ Each release is additive, ships a prerelease first, and is validated in `podcast
 | 1.2 | Less glue code | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
 | 1.3 | Timeline events and listening features | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
 | 1.4 | Resilience and reach | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
-| 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md) |
+| 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md), [`DOCS_PLAN.md`](./DOCS_PLAN.md) |
 
 Rules:
 
 - No breaking changes in 1.x. Collect them in `RELEASE_2_0.md`.
 - Every feature needs a named consumer need. Hypotheses are marked as such in the release docs.
 - Keep the public API small. Prefer opt-in attach functions and optional fields.
+- 2.0 has a documentation, LLM support and demo quality bar, with groundwork in each 1.x release. See [`DOCS_PLAN.md`](./DOCS_PLAN.md).
 - The library is open source. Community and adoption work is tracked in [`OPEN_SOURCE.md`](./OPEN_SOURCE.md) and scheduled into these releases.
