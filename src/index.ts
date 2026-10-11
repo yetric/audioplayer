@@ -1460,8 +1460,10 @@ export const attachAudioPlayerPersistence = (
 
   const waitForRestoredSource = (sourceId: string): Promise<void> =>
     new Promise((resolve) => {
-      const unsubscribe = player.subscribe((state) => {
-        if (state.currentSourceId !== sourceId) {
+      let settled = false;
+      let unsubscribe: (() => void) | undefined;
+      unsubscribe = player.subscribe((state) => {
+        if (settled || state.currentSourceId !== sourceId) {
           return;
         }
 
@@ -1469,9 +1471,15 @@ export const attachAudioPlayerPersistence = (
           return;
         }
 
-        unsubscribe();
+        settled = true;
+        unsubscribe?.();
         resolve();
       });
+
+      // subscribe emits synchronously, so the source may already be settled
+      if (settled) {
+        unsubscribe();
+      }
     });
 
   const restore = async (): Promise<PersistedPlayerState | null> => {
