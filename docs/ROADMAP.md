@@ -75,7 +75,7 @@ Each release is additive, ships a prerelease first, and is validated in `podcast
 | ------- | ----- | ------- |
 | 1.1 | Quality and publishing | Shipped. StrictMode fix, more tests, OIDC publishing |
 | 1.2 | Less glue code | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
-| 1.3 | Listening features | [`RELEASE_1_3.md`](./RELEASE_1_3.md) |
+| 1.3 | Timeline events and listening features | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
 | 1.4 | Resilience and reach | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
 | 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md) |
 

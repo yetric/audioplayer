@@ -41,7 +41,8 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 
 ### 5. Time-aligned content
 
-- Transcripts and chapters as a synchronized content API: current cue in state, seek to cue.
+- Build on the 1.3 cues and chapters ([`DESIGN_CUES.md`](./DESIGN_CUES.md)): transcripts as a first-class synchronized content API, with current cue in state and seek to cue.
+- Audio analysis for visual clients (waveform, spectrum) through a Web Audio engine.
 - Bookmarks and clips with start and end times.
 
 ### 6. Packaging and platform

@@ -31,6 +31,7 @@ Hypotheses to validate:
 | Official Web Component entry point (a custom element on a subpath export) | P2 | M | Turns the docs example into a tested export |
 | Angular service example moves from docs into a tested example project | P2 | S | A package only if there is demand |
 | Structured diagnostics: an opt-in event stream for errors and stalls | P2 | S | Helps field debugging without owning analytics |
+| Exploration: audio visualization data (waveform peaks or spectrum) for visual clients | P2 | M | Needs Web Audio and CORS-enabled audio. The engine owns the element, so this may belong with the 2.0 engine work. Decide after a spike. |
 
 ## Out of scope
 

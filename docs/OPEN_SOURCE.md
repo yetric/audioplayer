@@ -29,6 +29,8 @@ Gaps:
 
 Hypothesis to validate: other users are building music, audiobook, radio, language-learning or meditation apps, not only podcast apps. They would ask for features the code does not have today: shuffle, gapless or crossfade playback, A-B loop.
 
+Differentiator to aim for: clients that look and feel rich. Timeline events (chapter changes, cues, source lifecycle) let an app show media and data in step with the audio. See [`DESIGN_CUES.md`](./DESIGN_CUES.md).
+
 Proposed scope statement for the README:
 
 - The library is a headless, browser-first audio player with a queue, persistence and Media Session.
