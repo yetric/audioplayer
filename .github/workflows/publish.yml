@@ -43,7 +43,10 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           case "$VERSION" in
-            *-*) TAG=$(node -p "require('./package.json').version.split('-')[1].split('.')[0]") ;;
+            *-*)
+              PRERELEASE="${VERSION#*-}"
+              TAG="${PRERELEASE%%.*}"
+              ;;
             *) TAG=latest ;;
           esac
           npm publish --access public --tag "$TAG"
