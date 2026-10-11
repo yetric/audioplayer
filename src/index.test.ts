@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  attachAudioPlayerMediaSession,
   attachAudioPlayerPersistence,
   attachAudioPlayerProgressReporter,
   createAudioPlayer,
@@ -672,5 +673,222 @@ describe("attachAudioPlayerProgressReporter", () => {
     await player.load(episodeTwo);
 
     expect(onReport).not.toHaveBeenCalled();
+  });
+});
+
+describe("attachAudioPlayerMediaSession", () => {
+  class MockMediaMetadata {
+    constructor(
+      public init: {
+        title: string;
+        artist: string;
+        album: string;
+        artwork: Array<{ src: string; sizes: string }>;
+      },
+    ) {}
+  }
+
+  const createMediaSession = () => {
+    const handlers = new Map<string, ((details: unknown) => void) | null>();
+    return {
+      handlers,
+      metadata: null as MockMediaMetadata | null,
+      playbackState: "none",
+      setPositionState: vi.fn(),
+      setActionHandler: vi.fn(
+        (action: string, handler: ((details: unknown) => void) | null) => {
+          handlers.set(action, handler);
+        },
+      ),
+    };
+  };
+
+  let session: ReturnType<typeof createMediaSession>;
+
+  const runHandler = (action: string, details: unknown = {}) => {
+    const handler = session.handlers.get(action);
+    expect(handler).toBeTypeOf("function");
+    handler?.(details);
+  };
+
+  beforeEach(() => {
+    MockAudio.instances = [];
+    MockAudio.asyncLoad = false;
+    MockAudio.deferLoad = false;
+    vi.stubGlobal("Audio", MockAudio);
+    session = createMediaSession();
+    vi.stubGlobal("navigator", { mediaSession: session });
+    vi.stubGlobal("MediaMetadata", MockMediaMetadata);
+  });
+
+  it("degrades silently when Media Session is unsupported", async () => {
+    vi.stubGlobal("navigator", {});
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerMediaSession(player);
+
+    await player.load(episodeOne);
+
+    expect(() => controller.sync()).not.toThrow();
+    expect(() => controller.destroy()).not.toThrow();
+  });
+
+  it("updates metadata and playback state with the source", async () => {
+    const player = createAudioPlayer();
+    attachAudioPlayerMediaSession(player);
+    expect(session.metadata).toBeNull();
+    expect(session.playbackState).toBe("none");
+
+    await player.load({
+      ...episodeOne,
+      artist: "Artist",
+      album: "Album",
+      artwork: "https://example.com/art.png",
+    });
+
+    expect(session.metadata?.init.title).toBe("Episode 1");
+    expect(session.metadata?.init.artist).toBe("Artist");
+    expect(session.metadata?.init.album).toBe("Album");
+    expect(session.metadata?.init.artwork).toHaveLength(6);
+    expect(session.metadata?.init.artwork[0]).toEqual({
+      src: "https://example.com/art.png",
+      sizes: "96x96",
+    });
+    expect(session.playbackState).toBe("paused");
+
+    await player.play();
+    expect(session.playbackState).toBe("playing");
+
+    player.unload();
+    expect(session.metadata).toBeNull();
+    expect(session.playbackState).toBe("none");
+  });
+
+  it("uses custom artwork sizes", async () => {
+    const player = createAudioPlayer();
+    attachAudioPlayerMediaSession(player, { artworkSizes: [64, 128] });
+
+    await player.load({ ...episodeOne, artwork: "https://example.com/a.png" });
+
+    expect(session.metadata?.init.artwork.map((image) => image.sizes)).toEqual([
+      "64x64",
+      "128x128",
+    ]);
+  });
+
+  it("syncs position state when a duration is known and clears it otherwise", async () => {
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerMediaSession(player);
+    await player.load(episodeOne);
+
+    const audio = MockAudio.instances[0];
+    audio.duration = 100;
+    audio.currentTime = 20;
+    audio.dispatch("timeupdate");
+    controller.sync();
+
+    expect(session.setPositionState).toHaveBeenLastCalledWith({
+      duration: 100,
+      playbackRate: 1,
+      position: 20,
+    });
+
+    player.unload();
+    expect(session.setPositionState).toHaveBeenLastCalledWith();
+  });
+
+  it("wires play, pause, stop, next and previous to the player", async () => {
+    const player = createAudioPlayer();
+    attachAudioPlayerMediaSession(player);
+    await player.setQueue([episodeOne, episodeTwo], {
+      startAtId: "episode-1",
+    });
+
+    runHandler("play");
+    await Promise.resolve();
+    expect(player.getState().status).toBe("playing");
+
+    runHandler("pause");
+    expect(player.getState().status).toBe("paused");
+
+    runHandler("nexttrack");
+    await Promise.resolve();
+    expect(player.getState().currentSourceId).toBe("episode-2");
+
+    runHandler("previoustrack");
+    await Promise.resolve();
+    expect(player.getState().currentSourceId).toBe("episode-1");
+
+    await player.play();
+    runHandler("stop");
+    expect(player.getState().status).toBe("paused");
+  });
+
+  it("seeks with seekbackward, seekforward and seekto", async () => {
+    const player = createAudioPlayer();
+    attachAudioPlayerMediaSession(player, { seekOffsetSeconds: 15 });
+    await player.load(episodeOne);
+
+    const audio = MockAudio.instances[0];
+    audio.duration = 100;
+    audio.currentTime = 50;
+    audio.dispatch("timeupdate");
+
+    runHandler("seekforward");
+    expect(audio.currentTime).toBe(65);
+    audio.dispatch("timeupdate");
+
+    runHandler("seekbackward");
+    expect(audio.currentTime).toBe(50);
+    audio.dispatch("timeupdate");
+
+    runHandler("seekto", { seekTime: 80 });
+    expect(audio.currentTime).toBe(80);
+
+    runHandler("seekto", {});
+    expect(audio.currentTime).toBe(80);
+  });
+
+  it("clamps seeking to the start and the end", async () => {
+    const player = createAudioPlayer();
+    attachAudioPlayerMediaSession(player);
+    await player.load(episodeOne);
+
+    const audio = MockAudio.instances[0];
+    audio.duration = 100;
+    audio.currentTime = 3;
+    audio.dispatch("timeupdate");
+    runHandler("seekbackward");
+    expect(audio.currentTime).toBe(0);
+
+    audio.currentTime = 95;
+    audio.dispatch("timeupdate");
+    runHandler("seekforward");
+    expect(audio.currentTime).toBe(100);
+  });
+
+  it("ignores actions the browser does not support", async () => {
+    session.setActionHandler.mockImplementation(() => {
+      throw new TypeError("unsupported action");
+    });
+    const player = createAudioPlayer();
+
+    expect(() => attachAudioPlayerMediaSession(player)).not.toThrow();
+  });
+
+  it("removes handlers and clears state on destroy", async () => {
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerMediaSession(player);
+    await player.load(episodeOne);
+
+    controller.destroy();
+
+    for (const handler of session.handlers.values()) {
+      expect(handler).toBeNull();
+    }
+    expect(session.metadata).toBeNull();
+    expect(session.playbackState).toBe("none");
+
+    await player.load(episodeTwo);
+    expect(session.metadata).toBeNull();
   });
 });

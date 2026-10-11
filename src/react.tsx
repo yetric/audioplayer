@@ -32,14 +32,25 @@ export const AudioPlayerProvider = ({
     playerRef.current = createAudioPlayer(options);
   }
 
+  const mountedRef = useRef(false);
+
   useEffect(() => {
-    if (!player) {
-      return () => {
-        playerRef.current?.destroy();
-      };
+    if (player) {
+      return undefined;
     }
 
-    return undefined;
+    const owned = playerRef.current;
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      // StrictMode re-runs effects right after cleanup, so only destroy if not re-mounted
+      queueMicrotask(() => {
+        if (!mountedRef.current) {
+          owned?.destroy();
+        }
+      });
+    };
   }, [player]);
 
   return (

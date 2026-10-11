@@ -6,7 +6,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## Unreleased
 
-- No unreleased changes yet
+- Fixes `AudioPlayerProvider` destroying a provider-created player under React StrictMode, which left the player unusable in development
+- Adds tests for Media Session, the React adapter, and more queue, persistence and progress behavior
 
 ## 1.0.0 - 2026-10-11
 
