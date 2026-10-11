@@ -84,3 +84,4 @@ Rules:
 - No breaking changes in 1.x. Collect them in `RELEASE_2_0.md`.
 - Every feature needs a named consumer need. Hypotheses are marked as such in the release docs.
 - Keep the public API small. Prefer opt-in attach functions and optional fields.
+- The library is open source. Community and adoption work is tracked in [`OPEN_SOURCE.md`](./OPEN_SOURCE.md) and scheduled into these releases.

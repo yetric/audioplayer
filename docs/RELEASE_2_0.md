@@ -50,6 +50,11 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 - Raise the minimum browser and Node targets.
 - Separate packages for adapters (`-react`, `-element`, `-angular`) if the single package grows too large.
 
+### 7. Governance
+
+- A second maintainer or an npm organization, and a documented release and triage process, before wider adoption.
+- Support policy for 1.x after 2.0 ships (proposal: security and bug fixes for a stated period).
+
 ## Candidate breaking changes
 
 Collect them as they come up during 1.x. Do not break anything in 1.x.

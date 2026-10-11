@@ -33,6 +33,8 @@ Validate each with `podcast-app` usage data or listener feedback before committi
 | Share-position helper: build and parse a `?t=` style timestamp | P2 | S | Pure helpers, no player coupling |
 | Skip silence | P2 | L | Needs Web Audio. Parked until the 2.0 engine work, see `RELEASE_2_0.md`. |
 
+Other users (see [`OPEN_SOURCE.md`](./OPEN_SOURCE.md)): shuffle and A-B loop are likely asks from music and language-learning users. Build them only if demand is collected through Discussions or issues. Discussions and a "use case" issue template ship in this release.
+
 ## Out of scope
 
 - Transcripts and annotations (long shot, 2.0 area).

@@ -28,6 +28,9 @@ Taken from reading `podcast-app/src/context/audio.tsx` and `src/components/playe
 | Exported default rate presets and a `cycleRate(presets?)` helper | P1 | S | Only if `podcast-app` still hand-rolls it after the other items |
 | Browser-level tests with a real runner, covering load, seek, ended, auto-advance | P1 | L | Closes Issue 011. Run in CI. |
 | Recipes and the React guide updated to show the provider with plugins | P1 | S | Docs are part of done |
+| README rewrite for newcomers, with a scope statement | P0 | S | See `OPEN_SOURCE.md` |
+| Support matrix, `engines` review and a stability policy | P0 | S | Matrix is backed by the browser tests |
+| Server rendering recipe with a Node import test, bundle size budget in CI, `CODE_OF_CONDUCT.md` | P1 | S | See `OPEN_SOURCE.md` |
 
 ## Out of scope
 
@@ -37,6 +40,7 @@ Taken from reading `podcast-app/src/context/audio.tsx` and `src/components/playe
 
 ## Success measures
 
+- A newcomer can tell from the README what the library is for, and which browsers and frameworks it supports.
 - `podcast-app` deletes its custom `AudioProvider` and uses the library provider. Target: at least half of `src/context/audio.tsx` removed.
 - The player UI no longer polls on an interval.
 - One browser-level test run in CI passes on Chromium.
