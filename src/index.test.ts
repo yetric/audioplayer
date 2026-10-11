@@ -35,6 +35,7 @@ class MockTimeRanges implements TimeRanges {
 class MockAudio {
   static instances: MockAudio[] = [];
   static asyncLoad = false;
+  static deferLoad = false;
 
   src = "";
   currentTime = 0;
@@ -83,6 +84,10 @@ class MockAudio {
   }
 
   load(): void {
+    if (MockAudio.deferLoad) {
+      return;
+    }
+
     if (MockAudio.asyncLoad) {
       void Promise.resolve().then(() => this.dispatch("loadedmetadata"));
       return;
@@ -148,6 +153,7 @@ const persistedState = (
 describe("createAudioPlayer", () => {
   beforeEach(() => {
     MockAudio.instances = [];
+    MockAudio.deferLoad = false;
     vi.stubGlobal("Audio", MockAudio);
   });
 
@@ -258,6 +264,7 @@ describe("createAudioPlayer", () => {
 describe("queue navigation", () => {
   beforeEach(() => {
     MockAudio.instances = [];
+    MockAudio.deferLoad = false;
     MockAudio.asyncLoad = false;
     vi.stubGlobal("Audio", MockAudio);
   });
@@ -384,6 +391,7 @@ describe("queue navigation", () => {
 describe("error handling", () => {
   beforeEach(() => {
     MockAudio.instances = [];
+    MockAudio.deferLoad = false;
     MockAudio.asyncLoad = false;
     vi.stubGlobal("Audio", MockAudio);
   });
@@ -420,6 +428,7 @@ describe("error handling", () => {
 describe("attachAudioPlayerPersistence", () => {
   beforeEach(() => {
     MockAudio.instances = [];
+    MockAudio.deferLoad = false;
     MockAudio.asyncLoad = true;
     vi.stubGlobal("Audio", MockAudio);
   });
@@ -428,7 +437,7 @@ describe("attachAudioPlayerPersistence", () => {
     vi.useRealTimers();
   });
 
-  it("restores queue, repeat mode, volume, mute, rate and position without autoplay", async () => {
+  it("restores queue, repeat mode, volume, mute, rate and position without autoplay when the source is already loaded", async () => {
     const adapter = createMemoryAdapter(persistedState());
     const player = createAudioPlayer();
     const persistence = attachAudioPlayerPersistence(player, {
@@ -449,6 +458,35 @@ describe("attachAudioPlayerPersistence", () => {
     expect(state.rate).toBe(1.5);
     expect(audio.currentTime).toBe(42);
     expect(state.status).not.toBe("playing");
+  });
+
+  it("waits for a delayed load before seeking to the restored position", async () => {
+    MockAudio.deferLoad = true;
+    const adapter = createMemoryAdapter(persistedState());
+    const player = createAudioPlayer();
+    const persistence = attachAudioPlayerPersistence(player, {
+      adapter,
+      autoRestore: false,
+    });
+
+    let settled = false;
+    const restoring = persistence.restore().then(() => {
+      settled = true;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const audio = MockAudio.instances[0];
+    expect(player.getState().status).toBe("loading");
+    expect(settled).toBe(false);
+    expect(audio.currentTime).toBe(0);
+
+    audio.dispatch("loadedmetadata");
+    await restoring;
+
+    expect(settled).toBe(true);
+    expect(player.getState().currentSourceId).toBe("episode-2");
+    expect(player.getState().status).not.toBe("loading");
+    expect(audio.currentTime).toBe(42);
   });
 
   it("drops expired persisted state", async () => {
@@ -540,6 +578,7 @@ describe("attachAudioPlayerPersistence", () => {
 describe("attachAudioPlayerProgressReporter", () => {
   beforeEach(() => {
     MockAudio.instances = [];
+    MockAudio.deferLoad = false;
     MockAudio.asyncLoad = false;
     vi.stubGlobal("Audio", MockAudio);
   });
