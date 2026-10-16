@@ -25,7 +25,7 @@ Structure the site by need (tutorials, how-to guides, reference, explanation):
 - **Quickstart per framework** (vanilla, React, Angular, Vue, Svelte, Web Component). Goal: sound playing in about five minutes.
 - **Concepts:** state model, status transitions, events, queue, persistence, cues and chapters, engines.
 - **How-to recipes:** each one a task a developer actually has (playlist, resume, chapter cards, Media Session, offline).
-- **API reference generated from the types** (for example with TypeDoc), so it cannot drift. Every public symbol has JSDoc.
+- **API reference generated from the types** (for example with TypeDoc), so it cannot drift. JSDoc covers every public symbol where units, defaults, side effects or edge cases are not obvious from the type.
 - **Troubleshooting and FAQ:** browser autoplay rules, iOS Safari behavior, CORS, Media Session limits. Fill it from real bug reports.
 - **Support matrix, stability policy, changelog**, and a **1.x to 2.0 migration guide** with a codemod where the change is mechanical.
 - **Versioned docs** so 1.x users can still read 1.x pages, with site search.
@@ -43,7 +43,7 @@ Assistants write a lot of integration code. Make the right answer easy to produc
 
 - **`llms.txt` and `llms-full.txt`** at the site root, an index and a full dump of the docs in Markdown. `llms.txt` is a community convention, so confirm current tooling support before relying on it.
 - **Markdown for every docs page** (a raw `.md` URL, and a "copy as Markdown" button).
-- **JSDoc on every public symbol**, so the `.d.ts` files inside `node_modules` explain themselves. Assistants often read those.
+- **JSDoc where types cannot say enough** (units, defaults, side effects, error behavior, edge cases), so the `.d.ts` files inside `node_modules` explain themselves. Comments that only restate the type are not wanted. Assistants often read those.
 - **Usage notes shipped in the npm package** (a short `llms.txt` or `AGENTS.md`-style file) so an assistant working in a consumer repo can read it from `node_modules`. This adds package size, so keep it small and measure.
 - **Tested examples.** Every snippet in the docs compiles and runs in CI. Wrong examples teach assistants wrong code.
 - **Small, consistent API.** Fewer ways to do one thing means fewer wrong guesses. This is already a project principle.
@@ -76,7 +76,7 @@ Quality rules:
 
 | Release | Work |
 | ------- | ---- |
-| 1.2 | Publish the docs site (enable Pages and add a deploy workflow, or choose another host). Remove template leftovers. Merge `docs/` and `website/docs/` into one source. Add JSDoc to every public symbol. |
+| 1.2 | Publish the docs site (enable Pages and add a deploy workflow, or choose another host). Remove template leftovers. Merge `docs/` and `website/docs/` into one source. Add JSDoc where types cannot say enough. |
 | 1.3 | Generate the API reference. Add site search. Ship the flagship chapters demo and host the demo gallery. Compile-check docs snippets in CI. |
 | 1.4 | Add `llms.txt` and `llms-full.txt`, Markdown page export, the troubleshooting section, and the first LLM evals. Add two more demos. |
 | 2.0 | Versioned docs, the migration guide and codemod, the full demo set, evals gating the release, and a reviewed quickstart for every supported framework. |
@@ -84,7 +84,7 @@ Quality rules:
 ## Success measures
 
 - A developer who has never seen the library gets sound playing from the quickstart in about five minutes. Test with at least two outside people.
-- Every public export has JSDoc and an API reference entry. No broken links. All docs snippets pass in CI.
+- Every public export has an API reference entry, and JSDoc wherever the type alone is not enough. No broken links. All docs snippets pass in CI.
 - The LLM eval pass rate is recorded each release and does not fall.
 - The demo gallery loads without third-party audio hosts.
 

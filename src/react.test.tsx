@@ -2,10 +2,21 @@
 import { StrictMode, act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createAudioPlayer, type AudioPlayer, type AudioPlayerState } from "./index";
+import {
+  createAudioPlayer,
+  type AudioPlayer,
+  type AudioPlayerState,
+  type PersistedPlayerState,
+} from "./index";
 import { AudioPlayerProvider, useAudioPlayer, useAudioPlayerState } from "./react";
 
 class FakeAudio {
+  static instances: FakeAudio[] = [];
+
+  constructor() {
+    FakeAudio.instances.push(this);
+  }
+
   src = "";
   currentTime = 0;
   duration = 0;
@@ -73,6 +84,7 @@ describe("react adapter", () => {
   };
 
   beforeEach(() => {
+    FakeAudio.instances = [];
     vi.stubGlobal("Audio", FakeAudio);
     captured = { player: null, state: null };
     container = document.createElement("div");
@@ -191,5 +203,294 @@ describe("react adapter", () => {
 
     expect(destroy).toHaveBeenCalledTimes(1);
     root = createRoot(container);
+  });
+
+  describe("useAudioPlayerState selector", () => {
+    it("does not re-render when the selected value is unchanged", async () => {
+      const player = createAudioPlayer();
+      await player.load(episode);
+      const audio = FakeAudio.instances[0];
+      let renders = 0;
+      let status: string | null = null;
+
+      const StatusProbe = () => {
+        renders += 1;
+        status = useAudioPlayerState((state) => state.status);
+        return null;
+      };
+
+      render(
+        <AudioPlayerProvider player={player}>
+          <StatusProbe />
+        </AudioPlayerProvider>,
+      );
+      const initialRenders = renders;
+      expect(status).toBe("ready");
+
+      act(() => {
+        audio.currentTime = 5;
+        audio.dispatch("timeupdate");
+      });
+      expect(renders).toBe(initialRenders);
+
+      await act(async () => {
+        await player.play();
+      });
+      expect(status).toBe("playing");
+      expect(renders).toBeGreaterThan(initialRenders);
+    });
+
+    it("keeps a stable value with a custom equality check", async () => {
+      const player = createAudioPlayer();
+      await player.load(episode);
+      const audio = FakeAudio.instances[0];
+      const seen: Array<{ id: string | null }> = [];
+
+      const IdProbe = () => {
+        seen.push(
+          useAudioPlayerState(
+            (state) => ({ id: state.currentSourceId }),
+            (a, b) => a.id === b.id,
+          ),
+        );
+        return null;
+      };
+
+      render(
+        <AudioPlayerProvider player={player}>
+          <IdProbe />
+        </AudioPlayerProvider>,
+      );
+      const first = seen[seen.length - 1];
+
+      act(() => {
+        audio.currentTime = 5;
+        audio.dispatch("timeupdate");
+      });
+
+      expect(seen[seen.length - 1]).toBe(first);
+    });
+
+    it("returns the whole state without a selector", async () => {
+      const player = createAudioPlayer();
+      await player.load(episode);
+
+      render(
+        <AudioPlayerProvider player={player}>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+
+      expect(captured.state).toBe(player.getState());
+    });
+  });
+
+  describe("provider plugins", () => {
+    const createAdapter = (initial: PersistedPlayerState | null = null) => {
+      let stored = initial;
+      return {
+        load: vi.fn(() => stored),
+        save: vi.fn((state: PersistedPlayerState) => {
+          stored = state;
+        }),
+        clear: vi.fn(() => {
+          stored = null;
+        }),
+      };
+    };
+
+    const persisted: PersistedPlayerState = {
+      version: 1,
+      savedAt: Date.now(),
+      currentSource: episode,
+      currentSourceId: "episode-1",
+      currentTime: 0,
+      rate: 1.5,
+      volume: 1,
+      muted: false,
+      queue: {
+        items: [episode],
+        position: {
+          currentIndex: 0,
+          currentSourceId: "episode-1",
+          repeatMode: "off",
+        },
+      },
+    };
+
+    it("restores state and reports it through onRestore", async () => {
+      const adapter = createAdapter(persisted);
+      const onRestore = vi.fn();
+
+      render(
+        <AudioPlayerProvider persistence={{ adapter, onRestore }}>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+      await act(async () => {
+        await Promise.resolve();
+        FakeAudio.instances[0]?.dispatch("loadedmetadata");
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(onRestore).toHaveBeenCalledTimes(1);
+      expect(onRestore.mock.calls[0][0]?.currentSourceId).toBe("episode-1");
+      expect(captured.state?.rate).toBe(1.5);
+    });
+
+    it("reports null when there is nothing to restore", async () => {
+      const onRestore = vi.fn();
+
+      render(
+        <AudioPlayerProvider
+          persistence={{ adapter: createAdapter(), onRestore }}>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(onRestore).toHaveBeenCalledWith(null);
+    });
+
+    it("does not restore when autoRestore is false", async () => {
+      const adapter = createAdapter(persisted);
+      const onRestore = vi.fn();
+
+      render(
+        <AudioPlayerProvider
+          persistence={{ adapter, autoRestore: false, onRestore }}>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(adapter.load).not.toHaveBeenCalled();
+      expect(onRestore).not.toHaveBeenCalled();
+    });
+
+    it("calls onRestore once under StrictMode", async () => {
+      const onRestore = vi.fn();
+
+      render(
+        <StrictMode>
+          <AudioPlayerProvider
+            persistence={{ adapter: createAdapter(), onRestore }}>
+            <Probe />
+          </AudioPlayerProvider>
+        </StrictMode>,
+      );
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(onRestore).toHaveBeenCalledTimes(1);
+    });
+
+    it("preserves saved position in StrictMode restore callback", async () => {
+      const onRestore = vi.fn();
+      const adapter = createAdapter({ ...persisted, currentTime: 80 });
+      render(
+        <StrictMode>
+          <AudioPlayerProvider persistence={{ adapter, onRestore }}>
+            <Probe />
+          </AudioPlayerProvider>
+        </StrictMode>,
+      );
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(onRestore).toHaveBeenCalledTimes(1);
+      expect(onRestore.mock.calls[0][0]?.currentTime).toBe(80);
+    });
+
+    it("stops saving after unmount", async () => {
+      const adapter = createAdapter();
+      const player = createAudioPlayer();
+      await player.load(episode);
+
+      render(
+        <AudioPlayerProvider
+          player={player}
+          persistence={{ adapter, autoRestore: false }}>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+      await act(async () => {
+        await player.play();
+        player.pause();
+      });
+      expect(adapter.save).toHaveBeenCalled();
+
+      act(() => {
+        root.unmount();
+      });
+      adapter.save.mockClear();
+      await player.play();
+      player.pause();
+
+      expect(adapter.save).not.toHaveBeenCalled();
+      root = createRoot(container);
+    });
+
+    it("attaches and detaches Media Session", async () => {
+      const mediaSession = {
+        metadata: null as unknown,
+        playbackState: "none",
+        setPositionState: vi.fn(),
+        setActionHandler: vi.fn(),
+      };
+      vi.stubGlobal("navigator", { mediaSession });
+      vi.stubGlobal(
+        "MediaMetadata",
+        class {
+          constructor(public init: unknown) {}
+        },
+      );
+      const player = createAudioPlayer();
+
+      render(
+        <AudioPlayerProvider player={player} mediaSession>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+      await act(async () => {
+        await player.load(episode);
+      });
+      expect(mediaSession.metadata).not.toBeNull();
+      expect(mediaSession.setActionHandler).toHaveBeenCalledWith(
+        "play",
+        expect.any(Function),
+      );
+
+      act(() => {
+        root.unmount();
+      });
+      expect(mediaSession.metadata).toBeNull();
+      expect(mediaSession.setActionHandler).toHaveBeenCalledWith("play", null);
+      root = createRoot(container);
+    });
+
+    it("reports progress through the progress reporter", async () => {
+      const onReport = vi.fn();
+      const player = createAudioPlayer();
+      await player.load(episode);
+
+      render(
+        <AudioPlayerProvider player={player} progressReporter={{ onReport }}>
+          <Probe />
+        </AudioPlayerProvider>,
+      );
+      await act(async () => {
+        await player.play();
+        player.pause();
+      });
+
+      expect(onReport).toHaveBeenCalled();
+      expect(onReport.mock.lastCall?.[0].sourceId).toBe("episode-1");
+    });
   });
 });

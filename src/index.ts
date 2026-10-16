@@ -206,7 +206,18 @@ export interface AudioPlayer {
   pause(): void;
   toggle(): Promise<void>;
   unload(): void;
+  /**
+   * Seeks to an absolute position in seconds. Clamped at 0 and, when the
+   * duration is known, at the duration. Sets a `SEEK_ERROR` without an active
+   * source or when `time` is `NaN`.
+   */
   seek(time: number): void;
+  /**
+   * Seeks relative to the current position. Negative values go back. Follows
+   * the clamping and errors of `seek()`. While the duration is unknown, a
+   * forward skip advances from the current time without an upper limit.
+   */
+  skip(seconds: number): void;
   setRate(rate: number): void;
   setVolume(volume: number): void;
   setMuted(muted: boolean): void;
@@ -1138,6 +1149,11 @@ export const createAudioPlayer = (
         return;
       }
 
+      if (Number.isNaN(time)) {
+        setError(createPlayerError("SEEK_ERROR", "Seek time must be a number."));
+        return;
+      }
+
       const max = engine.getSnapshot(state.currentSource.durationHint).duration;
       const normalized = Math.max(
         0,
@@ -1150,6 +1166,10 @@ export const createAudioPlayer = (
       } catch (cause) {
         setError(normalizePlayerError("SEEK_ERROR", "Failed to seek audio.", cause));
       }
+    },
+
+    skip(seconds) {
+      this.seek(state.currentTime + seconds);
     },
 
     setRate(rate) {
@@ -1421,10 +1441,11 @@ export const attachAudioPlayerPersistence = (
   const saveIntervalMs =
     options.saveIntervalMs ?? DEFAULT_PERSISTENCE_SAVE_INTERVAL_MS;
   let destroyed = false;
+  let restoring = false;
   let playIntervalId: ReturnType<typeof setInterval> | null = null;
 
   const save = (): void => {
-    if (destroyed) {
+    if (destroyed || restoring) {
       return;
     }
 
@@ -1493,30 +1514,43 @@ export const attachAudioPlayerPersistence = (
       return null;
     }
 
-    player.setRepeatMode(persisted.queue.position.repeatMode);
-    player.setVolume(persisted.volume);
-    player.setMuted(persisted.muted);
-    player.setRate(persisted.rate);
+    restoring = true;
+    try {
+      player.setRepeatMode(persisted.queue.position.repeatMode);
+      player.setVolume(persisted.volume);
+      player.setMuted(persisted.muted);
+      player.setRate(persisted.rate);
 
-    if (persisted.queue.items.length > 0) {
-      await player.setQueue(persisted.queue.items, {
-        startAtId: persisted.queue.position.currentSourceId ?? undefined,
-      });
-    } else if (persisted.currentSource) {
-      await player.load(persisted.currentSource);
-    } else {
+      if (persisted.queue.items.length > 0) {
+        await player.setQueue(persisted.queue.items, {
+          startAtId: persisted.queue.position.currentSourceId ?? undefined,
+        });
+      } else if (persisted.currentSource) {
+        await player.load(persisted.currentSource);
+      } else {
+        return persisted;
+      }
+
+      if (destroyed) {
+        return null;
+      }
+
+      if (persisted.currentSourceId) {
+        await waitForRestoredSource(persisted.currentSourceId);
+      }
+
+      if (destroyed) {
+        return null;
+      }
+
+      if (persisted.currentTime > 0) {
+        player.seek(persisted.currentTime);
+      }
+
       return persisted;
+    } finally {
+      restoring = false;
     }
-
-    if (persisted.currentSourceId) {
-      await waitForRestoredSource(persisted.currentSourceId);
-    }
-
-    if (persisted.currentTime > 0) {
-      player.seek(persisted.currentTime);
-    }
-
-    return persisted;
   };
 
   const stateUnsubscribe = player.subscribe((state) => {
@@ -1751,13 +1785,10 @@ export const attachAudioPlayerMediaSession = (
     player.pause();
   });
   setActionHandler("seekbackward", () => {
-    const state = player.getState();
-    player.seek(Math.max(0, state.currentTime - seekOffsetSeconds));
+    player.skip(-seekOffsetSeconds);
   });
   setActionHandler("seekforward", () => {
-    const state = player.getState();
-    const max = state.duration > 0 ? state.duration : state.currentTime + seekOffsetSeconds;
-    player.seek(Math.min(max, state.currentTime + seekOffsetSeconds));
+    player.skip(seekOffsetSeconds);
   });
   setActionHandler("previoustrack", () => {
     void player.previous();

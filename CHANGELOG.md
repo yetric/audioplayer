@@ -6,7 +6,10 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## Unreleased
 
-- No unreleased changes yet
+- Adds `player.skip(seconds)` for relative seeking. Media Session seek buttons now use it.
+- `seek(NaN)` now sets a `SEEK_ERROR` instead of producing an invalid position
+- `AudioPlayerProvider` accepts `persistence` (with `onRestore`), `mediaSession` and `progressReporter` options and attaches and detaches them itself
+- `useAudioPlayerState(selector, isEqual?)` re-renders only when the selected value changes
 
 ## 1.1.0 - 2026-10-11
 

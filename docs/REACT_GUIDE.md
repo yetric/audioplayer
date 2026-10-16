@@ -19,45 +19,38 @@ export const App = () => (
 );
 ```
 
-## Bootstrap app-level integrations
+## Attach persistence, Media Session and progress reporting
+
+Pass them to the provider. It attaches them on mount and detaches them on unmount, including under StrictMode.
 
 ```tsx
-import { useEffect } from "react";
-import {
-  attachAudioPlayerMediaSession,
-  attachAudioPlayerPersistence,
-  attachAudioPlayerProgressReporter,
-  createLocalStoragePersistenceAdapter,
-} from "@yetric/audioplayer";
-import { useAudioPlayer } from "@yetric/audioplayer/react";
+import { AudioPlayerProvider } from "@yetric/audioplayer/react";
+import { createLocalStoragePersistenceAdapter } from "@yetric/audioplayer";
 
-const PlayerBootstrap = () => {
-  const player = useAudioPlayer();
-
-  useEffect(() => {
-    const persistence = attachAudioPlayerPersistence(player, {
+export const App = () => (
+  <AudioPlayerProvider
+    persistence={{
       adapter: createLocalStoragePersistenceAdapter("app-player"),
-    });
-
-    const reporter = attachAudioPlayerProgressReporter(player, {
+      onRestore(restored) {
+        console.log(restored ? "restored" : "nothing to restore");
+      },
+    }}
+    mediaSession
+    progressReporter={{
       intervalMs: 5000,
       onReport(snapshot) {
         console.log(snapshot);
       },
-    });
-
-    const mediaSession = attachAudioPlayerMediaSession(player);
-
-    return () => {
-      persistence.destroy();
-      reporter.destroy();
-      mediaSession.destroy();
-    };
-  }, [player]);
-
-  return null;
-};
+    }}>
+    <Routes />
+  </AudioPlayerProvider>
+);
 ```
+
+- These options are read once, when the provider mounts. Changing them later has no effect.
+- `onRestore` runs once after the automatic restore, with the restored state or `null`. It is not called when `autoRestore` is `false`.
+- `mediaSession` accepts `true` for the defaults, or Media Session options.
+- You can still call the `attachAudioPlayer...` functions yourself. The provider options are a shortcut for the common case.
 
 ## Read player state
 
@@ -85,6 +78,24 @@ export const PlayerScreen = () => {
     </div>
   );
 };
+```
+
+## Re-render only when a value changes
+
+`useAudioPlayerState()` without arguments re-renders on every state change, including every `timeupdate`. Pass a selector to subscribe to one value:
+
+```tsx
+const status = useAudioPlayerState((state) => state.status);
+const queueLength = useAudioPlayerState((state) => state.queue.items.length);
+```
+
+If the selector returns a new object or array on each call, pass an equality function as the second argument, otherwise the component re-renders on every change:
+
+```tsx
+const progress = useAudioPlayerState(
+  (state) => ({ time: Math.floor(state.currentTime), duration: state.duration }),
+  (a, b) => a.time === b.time && a.duration === b.duration,
+);
 ```
 
 ## Why this adapter stays thin
