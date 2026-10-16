@@ -1441,10 +1441,11 @@ export const attachAudioPlayerPersistence = (
   const saveIntervalMs =
     options.saveIntervalMs ?? DEFAULT_PERSISTENCE_SAVE_INTERVAL_MS;
   let destroyed = false;
+  let restoring = false;
   let playIntervalId: ReturnType<typeof setInterval> | null = null;
 
   const save = (): void => {
-    if (destroyed) {
+    if (destroyed || restoring) {
       return;
     }
 
@@ -1513,30 +1514,43 @@ export const attachAudioPlayerPersistence = (
       return null;
     }
 
-    player.setRepeatMode(persisted.queue.position.repeatMode);
-    player.setVolume(persisted.volume);
-    player.setMuted(persisted.muted);
-    player.setRate(persisted.rate);
+    restoring = true;
+    try {
+      player.setRepeatMode(persisted.queue.position.repeatMode);
+      player.setVolume(persisted.volume);
+      player.setMuted(persisted.muted);
+      player.setRate(persisted.rate);
 
-    if (persisted.queue.items.length > 0) {
-      await player.setQueue(persisted.queue.items, {
-        startAtId: persisted.queue.position.currentSourceId ?? undefined,
-      });
-    } else if (persisted.currentSource) {
-      await player.load(persisted.currentSource);
-    } else {
+      if (persisted.queue.items.length > 0) {
+        await player.setQueue(persisted.queue.items, {
+          startAtId: persisted.queue.position.currentSourceId ?? undefined,
+        });
+      } else if (persisted.currentSource) {
+        await player.load(persisted.currentSource);
+      } else {
+        return persisted;
+      }
+
+      if (destroyed) {
+        return null;
+      }
+
+      if (persisted.currentSourceId) {
+        await waitForRestoredSource(persisted.currentSourceId);
+      }
+
+      if (destroyed) {
+        return null;
+      }
+
+      if (persisted.currentTime > 0) {
+        player.seek(persisted.currentTime);
+      }
+
       return persisted;
+    } finally {
+      restoring = false;
     }
-
-    if (persisted.currentSourceId) {
-      await waitForRestoredSource(persisted.currentSourceId);
-    }
-
-    if (persisted.currentTime > 0) {
-      player.seek(persisted.currentTime);
-    }
-
-    return persisted;
   };
 
   const stateUnsubscribe = player.subscribe((state) => {

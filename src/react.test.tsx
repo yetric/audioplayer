@@ -390,6 +390,23 @@ describe("react adapter", () => {
       expect(onRestore).toHaveBeenCalledTimes(1);
     });
 
+    it("preserves saved position in StrictMode restore callback", async () => {
+      const onRestore = vi.fn();
+      const adapter = createAdapter({ ...persisted, currentTime: 80 });
+      render(
+        <StrictMode>
+          <AudioPlayerProvider persistence={{ adapter, onRestore }}>
+            <Probe />
+          </AudioPlayerProvider>
+        </StrictMode>,
+      );
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(onRestore).toHaveBeenCalledTimes(1);
+      expect(onRestore.mock.calls[0][0]?.currentTime).toBe(80);
+    });
+
     it("stops saving after unmount", async () => {
       const adapter = createAdapter();
       const player = createAudioPlayer();
