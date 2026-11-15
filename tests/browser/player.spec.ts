@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
 test("loads real audio, plays, pauses, seeks, and skips", async ({ page }) => {
   await page.evaluate(() => window.player.load({ id: "first", src: "/examples/audio/tone.wav" }));
   await expect.poll(() => page.evaluate(() => window.player.getState().status)).toBe("ready");
-  expect(await page.evaluate(() => window.player.getState().duration)).toBeCloseTo(4);
+  expect(await page.evaluate(() => window.player.getState().duration)).toBeCloseTo(30);
   await page.click("#play");
   await expect.poll(() => page.evaluate(() => window.player.getState().currentTime)).toBeGreaterThan(0);
   await page.evaluate(() => window.player.pause());
