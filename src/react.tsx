@@ -11,7 +11,7 @@ import {
   type AudioPlayer,
   type AudioPlayerState,
   type CreateAudioPlayerOptions,
-} from "./index";
+} from "./index.js";
 
 const AudioPlayerContext = createContext<AudioPlayer | null>(null);
 
