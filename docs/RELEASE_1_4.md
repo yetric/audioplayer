@@ -135,7 +135,7 @@ Do not assume the local skipper works with Cast or Spotify. Remote seeking and b
 ## Deferred from the old 1.4 plan
 
 - Automatic retry/backoff, URL resolution for offline media, caching/downloads, and next-item preloading. Revisit with concrete reproduction cases and resource measurements.
-- Official Web Component and Angular packages; existing framework examples remain supported independently.
+- The tested Web Component export, a standalone tested Angular example project, and official framework packages are deferred and unscheduled. Existing framework documentation and examples remain available; expanding their coverage is not a 1.4 deliverable.
 - A diagnostics/analytics subsystem, frame-rate clocks, point cues, transcript file parsers, and audio visualization/analysis.
 - Sleep timers, listening-history stores, rate memory, share links, and unrelated listener conveniences. Existing issues remain backlog, not automatic 1.4 commitments.
 - A custom Cast receiver with multimedia UI, multi-room orchestration, service-specific streaming engines, and guaranteed playback after the sender closes. A minimal receiver required for the selected authentication/renewal flow is included in M2.
