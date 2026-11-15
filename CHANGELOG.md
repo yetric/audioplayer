@@ -8,6 +8,17 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 - No unreleased changes yet
 
+## 1.3.0-beta.1 - 2026-11-15
+
+- Adds opt-in timed metadata with `attachAudioPlayerCues`, typed overlapping ranges, stable active snapshots, enter/exit events, metadata refresh, and automatic cleanup
+- Adds `createPodcastChapterCues` for parsed Podcasting 2.0 JSON Chapters 1.2.0, preserving hidden markers and supporting inferred and open-ended chapter ranges
+- Adds `useAudioPlayerCues(controller)` for application-owned controllers, including React StrictMode support
+- Keeps cue presentation aligned after seeking, rate changes, repeat, queue transitions, and source changes
+- Prevents stale cue callbacks after unload or destruction and duplicate opening-cue events during queue setup
+- Extends the demo with local audio, synchronized artwork, text, links, and chapter navigation
+- Documents the metadata contract, consumer-owned fetching and rendering, and parsed timed transcript mapping
+- Validates the milestone with 103 unit tests and 18 browser cases across Chromium, Firefox, and WebKit
+
 ## 1.2.0 - 2026-11-15
 
 - Adds `player.skip(seconds)` for relative seeking. Media Session seek buttons now use it.
