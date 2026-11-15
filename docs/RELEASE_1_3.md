@@ -1,73 +1,71 @@
-# 1.3: Timeline Events and Listening Features
+# 1.3: Timed Multimedia Metadata
 
-Status: proposed. Additive only, no breaking changes.
+Status: first milestone implemented on the 1.3.0 development branch; release validation in progress. Additive only, no breaking changes. The package version remains 1.2.0 until a prerelease is prepared.
 
-## Theme
+Implemented API and demo instructions: [Timed metadata](./TIMED_METADATA.md).
 
-Let apps react to where playback is (chapter changes, cues, a new sound, a certain time) so they can build visibly rich clients, and add the playback features listeners expect. Everything is opt-in, and the headless core does not force any of it on anyone.
+## Goal
 
-The timeline events are the headline. The design is in [`DESIGN_CUES.md`](./DESIGN_CUES.md).
+Let applications turn audio listening into a multimedia experience with synchronized images, links, text, slides, and other data. The library manages timing and active cues. Consumers produce and fetch metadata and decide how to render it.
 
-## Evidence and hypotheses
+The design and [Podcasting 2.0 alignment](./DESIGN_CUES.md#podcasting-20-alignment) are in [`DESIGN_CUES.md`](./DESIGN_CUES.md). Use JSON Chapters as the first interchange format rather than inventing a competing chapter format.
 
-Repo evidence:
+## First milestone
 
-- `V1_ISSUES.md` Issue 015 lists sleep timer, skip silence, advanced speed presets and share-position helpers as candidates, deferred until a documented use case justifies them.
-- The persistence plugin stores one session (the last item and position). It does not remember positions for other episodes.
+| Item | Acceptance criteria |
+| ---- | ------------------- |
+| Typed range cues with generic payloads | Stable IDs, finite supplied times in original-media seconds, optional end for terminal ranges, overlapping cues supported |
+| Podcasting 2.0 JSON Chapters adapter | Pure conversion from parsed documents; preserve titles, images, links, and hidden markers; infer missing ends with documented policies |
+| Opt-in cue controller | Observable active-cue snapshot, enter/exit notifications, predictable attachment and cleanup |
+| Synchronization semantics | Seeking, scrubbing, rate changes, repeat, unload, and queue auto-advance produce the correct active set |
+| React integration | An active-cues hook subscribes to the controller and re-renders only when active content changes |
+| Multimedia demo | A JSON Chapters fixture drives accessible images, titles, links, and chapter navigation; hidden markers update content without appearing in navigation |
+| Verification and documentation | Unit tests for cue transitions; browser tests for demo playback, seeking, and source changes; documented contracts and examples |
 
-Hypotheses to validate before building (none of these are confirmed demand):
+## Consumer data contract
 
-- Listeners want to resume any episode where they left off, not only the last one.
-- Chapters are worth showing when a feed provides them.
-- A sleep timer is a common request for evening listening.
+- Metadata is supplied as plain data; no backend, feed format, or detection service is required.
+- Cue payloads are generic. An application may define image/text/link types without adding presentation fields to the core player state.
+- Consumers associate metadata with the exact source and audio revision. Dynamic ad insertion or file replacement can invalidate timings.
+- The initial API accepts parsed data. Ship an opt-in adapter for Podcasting 2.0 JSON Chapters and document mapping parsed timed transcripts into generic cues. RSS discovery, fetching, and transcript file parsing remain with consumers.
+- Follow the published chapter fields, including `toc: false` for metadata-only markers. It does not authorize skipping audio. Episode artwork and content links are fallback content, not timed markers.
+- The library does not fetch metadata, load images, insert HTML, or navigate links.
 
-Validate each with a focused demo and user feedback before committing.
+## Next increments after the first milestone
 
-## Scope
+- Dedicated chapter navigation helpers and optional current-chapter state, using the same timeline as the first milestone's adapter.
+- Transcript file parsers for formats linked by `podcast:transcript`, based on concrete consumer needs.
+- Point cues and finer visual timing if the demo establishes a need and their seek/replay semantics are specified.
+- Generated API reference and compile-checked examples as the API settles.
 
-| Item | Priority | Size | Notes |
-| ---- | -------- | ---- | ----- |
-| Cue events: `attachAudioPlayerCues` with `cueenter` and `cueexit`, point and range cues | P0 | L | See `DESIGN_CUES.md`. Seek, scrub, loop and ordering rules need tests. |
-| Chapters: optional `chapters` on `AudioSource`, `currentChapter` in state, `chapterchange`, `seekToChapter` | P0 | M | Built on the cue mechanism. Media Session chapter info is a stretch. |
-| Source lifecycle events: `sourceready`, `sourcestart`, `sourceend`, plus `waiting` and `playing` shared with 1.4 | P0 | S | Separates "new sound requested" from "new sound ready" |
-| React hooks: `useActiveCues`, `useCurrentChapter`, `useAudioPlayerTime` | P1 | S | Re-render only on change |
-| Frame-rate clock helper for animation, active only while playing | P1 | S | Cheap `getCurrentTime()` read per frame |
-| Generated API reference, docs site search, snippet compile checks in CI | P1 | M | See `DOCS_PLAN.md` |
-| Flagship demo: podcast player with chapter art and show-note cards, in a hosted demo gallery | P1 | M | Doubles as the demand check for cues |
-| Sleep timer: stop after N minutes or at end of episode, exposed in state with an event | P1 | M | Opt-in plugin, same attach pattern as persistence |
-| Per-source position memory: a positions store keyed by source `id`, with expiry | P1 | M | Separate from the single-session persistence. Pluggable adapter. |
-| Per-source or per-show playback rate memory | P1 | S | Builds on the positions store |
-| Played threshold: mark a source as played at a configurable fraction | P1 | S | Reported through the progress hooks |
-| Share-position helper: build and parse a `?t=` style timestamp | P2 | S | Pure helpers, no player coupling |
+## Separate follow-up: metadata-driven silence skipping
 
-Other users (see [`OPEN_SOURCE.md`](./OPEN_SOURCE.md)): shuffle and A-B loop are likely asks from music and language-learning users. Build them only if demand is collected through Discussions or issues. Discussions and a "use case" issue template ship in this release.
+Presentation cues and silence skip ranges share the original media timeline but have different responsibilities. A skip range authorizes a playback jump; a presentation cue describes content to display.
 
-## Out of scope
+A future opt-in controller can consume precomputed, consumer-supplied skip ranges and use the existing seek API. This does not inherently require Web Audio or a new engine. Client-side silence detection is a separate project.
 
-- Skip silence. It needs Web Audio, so it waits for the 2.0 engine work (see `RELEASE_2_0.md`).
-- Transcripts and annotations (long shot, 2.0 area).
-- Waveform UI.
-- Any network or sync behavior. The library does not own network requests.
+After a skip, active presentation must match the destination. Cues wholly inside the skipped interval must not flash on screen or trigger presentation side effects.
+
+## Deferred from this release's core scope
+
+- Sleep timers, per-source position/rate memory, played thresholds, and share-position helpers.
+- Shuffle, A-B loop, and unrelated listening features.
+- A frame-rate clock, animation guarantees, and additional lifecycle events unless required by the milestone.
+- Transcript parsing, annotation editing, silence detection, waveform analysis, and a new playback engine.
+- Fetching, caching, authentication, network synchronization, or a UI component library.
+
+Deferred features need their own use case and scheduling decision; they do not automatically move into 1.4.
 
 ## Success measures
 
-- The hosted demo demonstrates at least two of the P0 and P1 features through the public library API, with automated coverage for their behavior.
-- Public API additions stay under the size of one attach function each.
-
-## Risks
-
-- Feature creep against the rule "keep the public API small". Each feature must justify itself with a documented use case and ship as an opt-in attach function or an optional field.
-- A positions store can grow without bound. It needs a cap and expiry from day one.
-
-## Open questions
-
-- Where should positions live: the library's own `localStorage` key, or only through an adapter the app provides?
-- Should chapters come from the app (it parses the feed) or from the library (it reads embedded metadata)? Leaning to the app, since the library does not fetch.
-
-## Scope note
-
-This release is large. If it runs long, ship cues, chapters and lifecycle events as 1.3, and move the sleep timer, position memory and rate memory to a 1.4 release. Timeline events come first because they enable the visible-client use cases.
+- The demo presents images, links, and text from consumer-supplied metadata without application-owned timing loops.
+- Seeking into an interval immediately activates its content; seeking out removes it.
+- Overlapping cues render together. Source changes and unload clear stale content.
+- Queue transitions and repeat rebuild the correct active set.
+- Published-format chapter fixtures work without a custom interchange schema. Missing ends and hidden markers retain their documented meaning.
+- Playback position, persistence, and chapters retain original-media timestamps.
+- No existing playback API or behavior changes when cues are not attached.
 
 ## Release gate
 
-Publish `1.3.0-beta.1`. Verify chapter art and linked notes synchronized with audio in this repo's hosted demo, pass the automated checks, and defer features without a demonstrated use case before promoting.
+Publish `1.3.0-beta.1` after the milestone passes unit, browser, package, type, size, and docs checks. Validate the multimedia demo and examples before promoting. External app adoption and silence skipping are not release gates.

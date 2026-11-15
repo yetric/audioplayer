@@ -5,6 +5,10 @@ slug: /integrations
 
 # Integrations
 
+## Timed multimedia metadata (1.3 development)
+
+Use an opt-in cue controller for synchronized images, text, and links, with a parsed Podcasting 2.0 JSON Chapters adapter and a React subscription hook. See [Timed metadata](./TIMED_METADATA.md) for the data contract, lifecycle, and demo.
+
 ## Persistence
 
 The built-in localStorage adapter is best-effort: reads return `null` and writes/clears are ignored when storage is unavailable, denied, or full. Use a custom adapter if your application needs to report storage failures.

@@ -43,6 +43,10 @@
         gap: 12px;
       }
 
+      [hidden] {
+        display: none;
+      }
+
       button,
       select {
         font: inherit;
@@ -93,7 +97,7 @@
     <main>
       <section>
         <h1>@yetric/audioplayer demo</h1>
-        <p>Use this page to test playback, queue navigation, persistence, progress reporting, and Media Session integration.</p>
+        <p>Play a local audio sample with synchronized chapter images, text, and links.</p>
       </section>
 
       <section>
@@ -123,6 +127,12 @@
           <button id="repeat-all" class="secondary">Repeat All</button>
           <button id="clear-queue" class="secondary">Clear Queue</button>
         </div>
+      </section>
+
+      <section>
+        <h2>Now playing</h2>
+        <div id="cards" aria-live="polite"></div>
+        <nav id="chapters" class="controls" aria-label="Chapters"></nav>
       </section>
 
       <section>

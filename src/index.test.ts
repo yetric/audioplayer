@@ -3,6 +3,8 @@ import {
   attachAudioPlayerMediaSession,
   attachAudioPlayerPersistence,
   attachAudioPlayerProgressReporter,
+  attachAudioPlayerCues,
+  type AudioPlayerCue,
   createAudioPlayer,
   createLocalStoragePersistenceAdapter,
   type PersistedPlayerState,
@@ -996,5 +998,234 @@ describe("attachAudioPlayerMediaSession", () => {
 
     await player.load(episodeTwo);
     expect(session.metadata).toBeNull();
+  });
+});
+
+describe("cue controller", () => {
+  beforeEach(() => {
+    MockAudio.instances = [];
+    MockAudio.deferLoad = false;
+    MockAudio.asyncLoad = false;
+    vi.stubGlobal("Audio", MockAudio);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const ranges: AudioPlayerCue<string>[] = [
+    { id: "intro", start: 0, end: 2, data: "Intro" },
+    { id: "note", start: 1, end: 3, data: "Note" },
+    { id: "last", start: 4, data: "Last" },
+  ];
+  const position = (time: number, event = "timeupdate") => {
+    const audio = MockAudio.instances[0];
+    audio.currentTime = time;
+    audio.dispatch(event);
+  };
+
+  it("publishes a stable initial snapshot and orders overlapping transitions", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const listener = vi.fn();
+    controller.subscribe(listener);
+    const initial = controller.getSnapshot();
+    expect(initial.activeCues.map((cue) => cue.id)).toEqual(["intro"]);
+    position(0.5);
+    player.setVolume(0.5);
+    expect(controller.getSnapshot()).toBe(initial);
+    expect(listener).toHaveBeenCalledTimes(1);
+    const transitions: string[] = [];
+    controller.on("cueexit", ({ cue }) => transitions.push(`exit:${cue.id}`));
+    controller.on("cueenter", ({ cue }) => transitions.push(`enter:${cue.id}`));
+    position(1);
+    expect(controller.getSnapshot().activeCues.map((cue) => cue.id)).toEqual(["intro", "note"]);
+    position(2);
+    position(4);
+    expect(transitions).toEqual(["enter:note", "exit:intro", "exit:note", "enter:last"]);
+    controller.destroy();
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    const calls = listener.mock.calls.length;
+    position(0);
+    controller.refresh();
+    expect(listener).toHaveBeenCalledTimes(calls);
+    player.destroy();
+  });
+
+  it("coalesces seeks at their final destination without entering crossed cues", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    controller.on("cueenter", entered);
+    player.seek(1);
+    position(1);
+    player.seek(4.5);
+    position(4.5);
+    expect(entered).not.toHaveBeenCalled();
+    position(4.5, "seeked");
+    expect(entered.mock.calls.map(([event]) => event.cue.id)).toEqual(["last"]);
+    player.setRate(2);
+    expect(controller.getSnapshot().activeCues[0].id).toBe("last");
+    player.seek(0);
+    position(0, "seeked");
+    expect(controller.getSnapshot().activeCues[0].id).toBe("intro");
+    player.destroy();
+  });
+
+  it("supports late attachment, refresh, and atomic rejection of invalid replacement", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    position(4);
+    let metadata = ranges;
+    const getCues = vi.fn(() => metadata);
+    const controller = attachAudioPlayerCues(player, { getCues });
+    expect(controller.getSnapshot().activeCues[0].id).toBe("last");
+    metadata = [{ id: "replacement", start: 3, end: 5, data: "Revised" }];
+    controller.refresh();
+    expect(controller.getSnapshot().activeCues[0].data).toBe("Revised");
+    metadata = [{ id: "invalid", start: NaN, data: "Invalid" }];
+    expect(() => controller.refresh()).toThrow(RangeError);
+    position(4.5);
+    expect(controller.getSnapshot().activeCues[0].data).toBe("Revised");
+    metadata = [];
+    controller.refresh();
+    expect(controller.getSnapshot().activeCues).toEqual([]);
+    player.destroy();
+  });
+
+  it("clears at the media end and rebuilds cues on repeat, queue transitions and unload", async () => {
+    const player = createAudioPlayer();
+    await player.setQueue([episodeOne, episodeTwo]);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    player.setRepeatMode("one");
+    position(4);
+    MockAudio.instances[0].dispatch("ended");
+    await Promise.resolve();
+    expect(controller.getSnapshot().activeCues[0].id).toBe("intro");
+    player.setRepeatMode("off");
+    MockAudio.instances[0].dispatch("ended");
+    await Promise.resolve();
+    expect(controller.getSnapshot().sourceId).toBe(episodeTwo.id);
+    position(4);
+    MockAudio.instances[0].duration = 5;
+    position(5);
+    expect(controller.getSnapshot().activeCues).toEqual([]);
+    position(4);
+    MockAudio.instances[0].dispatch("ended");
+    expect(controller.getSnapshot().activeCues).toEqual([]);
+    player.unload();
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    player.destroy();
+  });
+
+  it.each([
+    [{ id: "", start: 0, data: null }],
+    [{ id: "x", start: -1, data: null }],
+    [{ id: "x", start: 0, end: Infinity, data: null }],
+    [{ id: "x", start: 1, end: 1, data: null }],
+    [{ id: "x", start: 0, data: null }, { id: "x", start: 2, data: null }],
+  ])("rejects invalid cue lists without leaving a subscription: %j", async (...invalid) => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const subscribe = vi.spyOn(player, "subscribe");
+    expect(() => attachAudioPlayerCues(player, { getCues: () => invalid })).toThrow(RangeError);
+    expect(subscribe).not.toHaveBeenCalled();
+    player.destroy();
+  });
+
+  it.each([false, true])("enters once per queue load, reload, and repeat with deferred metadata: %s", async (deferred) => {
+    MockAudio.deferLoad = deferred;
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    controller.on("cueenter", entered);
+    await player.setQueue([episodeOne]);
+    expect(entered.mock.calls.map(([event]) => event.cue.id)).toEqual(["intro"]);
+    if (deferred) {
+      expect(player.getState().status).toBe("loading");
+      MockAudio.instances[0].dispatch("loadedmetadata");
+      expect(entered).toHaveBeenCalledTimes(1);
+      MockAudio.deferLoad = false;
+    }
+    await player.load(episodeOne);
+    expect(entered).toHaveBeenCalledTimes(2);
+    player.setRepeatMode("one");
+    MockAudio.instances[0].dispatch("ended");
+    await Promise.resolve();
+    expect(entered).toHaveBeenCalledTimes(3);
+    player.destroy();
+  });
+
+  it("stops a superseded publication when an exit listener unloads the player", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    const staleExit = vi.fn();
+    controller.on("cueexit", ({ cue }) => {
+      if (cue.id === "intro") player.unload();
+    });
+    controller.on("cueexit", ({ cue }) => {
+      if (cue.id === "intro") staleExit();
+    });
+    controller.on("cueenter", entered);
+    position(4);
+    expect(entered).not.toHaveBeenCalled();
+    expect(staleExit).not.toHaveBeenCalled();
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    player.destroy();
+  });
+
+  it.each(["destroy", "unload"])("does not restore content after %s in an exit listener during reset", async (action) => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    controller.on("cueenter", entered);
+    controller.on("cueexit", () => {
+      if (action === "destroy") controller.destroy();
+      else player.unload();
+    });
+    await player.load(episodeTwo);
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    expect(entered).not.toHaveBeenCalled();
+    player.destroy();
+  });
+
+  it.each(["destroy", "unload"])("stops remaining callbacks after %s in an enter listener", async (action) => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const staleEnter = vi.fn();
+    controller.on("cueenter", () => {
+      if (action === "destroy") controller.destroy();
+      else player.unload();
+    });
+    controller.on("cueenter", staleEnter);
+    position(1);
+    expect(staleEnter).not.toHaveBeenCalled();
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    player.destroy();
+  });
+
+  it("finds active intervals in a large ordered transcript", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const transcript = Array.from({ length: 10000 }, (_, i) => ({
+      id: String(i),
+      get start() { reads++; return i; },
+      get end() { reads++; return i + 1; },
+      data: i,
+    }));
+    let reads = 0;
+    const controller = attachAudioPlayerCues(player, { getCues: () => [
+      { id: "long", start: 0, data: -1 }, ...transcript,
+    ] });
+    reads = 0;
+    position(9998.5);
+    expect(controller.getSnapshot().activeCues.map((cue) => cue.data)).toEqual([-1, 9998]);
+    expect(reads).toBeLessThan(100);
+    position(250.5);
+    expect(controller.getSnapshot().activeCues.map((cue) => cue.data)).toEqual([-1, 250]);
+    player.destroy();
   });
 });

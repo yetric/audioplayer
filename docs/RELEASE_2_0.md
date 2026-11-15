@@ -17,7 +17,7 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 ### 1. Public engine contract
 
 - Export a stable `AudioEngine` interface and document it.
-- Ship a Web Audio engine for features `HTMLAudioElement` cannot do: skip silence, volume boost, loudness normalization.
+- Explore a Web Audio engine for signal processing such as client-side silence analysis, volume boost, and loudness normalization. Skipping consumer-supplied silence ranges can use the existing seek API and does not require this engine work.
 - Ship a React Native engine as a separate package, `@yetric/audioplayer-rn`, on the same contract.
 - Engine selection is an option with the browser engine as the default, so it is additive and could ship in 1.x once the contract is public. Not a breaking change.
 

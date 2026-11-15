@@ -1,0 +1,9 @@
+{
+  "version": "1.2.0",
+  "title": "Recording session",
+  "chapters": [
+    { "startTime": 0, "title": "Studio notes", "img": "./studio.svg", "url": "https://podcasting2.org/" },
+    { "startTime": 2, "title": "Inside the recording", "toc": false, "img": "./recording.svg", "url": "https://podcasting2.org/docs/podcast-namespace/tags/chapters" },
+    { "startTime": 4, "title": "Further listening", "url": "https://podcasting2.org/docs/podcast-namespace/tags/transcript" }
+  ]
+}

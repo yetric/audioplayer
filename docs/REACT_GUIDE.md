@@ -124,3 +124,7 @@ The hook returns `AudioPlayerProgressState` and listens to player notifications 
 Use this hook in a separate timeline component. A parent using the whole-state hook will still re-render on every state update. For backend reporting, use `progressReporter` instead.
 
 For server-rendered apps, see [Server rendering](./SERVER_RENDERING.md).
+
+## Timed content (1.3 development)
+
+`useAudioPlayerCues(controller)` subscribes to an application-owned cue controller. It re-renders when the source or active cue objects change and releases its subscription on unmount. It does not create or destroy the controller. See [Timed metadata](./TIMED_METADATA.md#react) for usage and lifecycle details.

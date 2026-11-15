@@ -2,21 +2,24 @@ import {
   attachAudioPlayerMediaSession,
   attachAudioPlayerPersistence,
   attachAudioPlayerProgressReporter,
+  attachAudioPlayerCues,
+  createPodcastChapterCues,
   createAudioPlayer,
   createLocalStoragePersistenceAdapter,
 } from "../src/index.ts";
+import chapterDocument from "./chapters.json";
 
 const queue = [
   {
     id: "episode-1",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    src: new URL("../examples/audio/tone.wav", import.meta.url).href,
     title: "Episode 1",
     artist: "Yetric",
     album: "AudioPlayer Demo",
   },
   {
     id: "episode-2",
-    src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    src: new URL("../examples/audio/tone.wav", import.meta.url).href,
     title: "Episode 2",
     artist: "Yetric",
     album: "AudioPlayer Demo",
@@ -40,6 +43,47 @@ attachAudioPlayerProgressReporter(player, {
 });
 
 attachAudioPlayerMediaSession(player);
+
+const chapterCues = createPodcastChapterCues(chapterDocument, { sourceId: queue[0].id });
+const cues = attachAudioPlayerCues(player, {
+  getCues: (source) => source.id === queue[0].id ? chapterCues : [],
+});
+const cardsEl = document.querySelector("#cards");
+const chaptersEl = document.querySelector("#chapters");
+const chapterImages = {
+  "./studio.svg": new URL("./studio.svg", import.meta.url).href,
+  "./recording.svg": new URL("./recording.svg", import.meta.url).href,
+};
+for (const cue of chapterCues.filter(({ data }) => data.toc !== false)) {
+  const button = document.createElement("button");
+  button.textContent = cue.data.title ?? `Chapter at ${cue.start}s`;
+  button.onclick = () => player.seek(cue.start);
+  chaptersEl.append(button);
+}
+cues.subscribe(({ activeCues, sourceId }) => {
+  cardsEl.replaceChildren();
+  for (const { data: chapter } of activeCues) {
+    const card = document.createElement("article");
+    const title = document.createElement("p");
+    title.textContent = chapter.title ?? "Recording detail";
+    card.append(title);
+    if (chapter.img) {
+      const image = document.createElement("img");
+      image.src = chapterImages[chapter.img];
+      image.alt = chapter.title ?? "Illustration of the recording";
+      image.width = 240;
+      card.append(image);
+    }
+    if (chapter.url) {
+      const link = document.createElement("a");
+      link.href = chapter.url;
+      link.textContent = "Read more";
+      card.append(link);
+    }
+    cardsEl.append(card);
+  }
+  chaptersEl.hidden = sourceId !== queue[0].id;
+});
 
 player.subscribe((state) => {
   stateEl.textContent = JSON.stringify(state, null, 2);
