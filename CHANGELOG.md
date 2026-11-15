@@ -16,6 +16,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - `useAudioPlayerState(selector, isEqual?)` re-renders only when the selected value changes
 - Adds `useAudioPlayerProgress({ intervalMs })` for throttled, event-driven timeline updates
 - Fixes persistence restoration under React StrictMode
+- Keeps browser storage failures, including page-teardown and quota errors, from interrupting playback
 - Adds real-browser playback and React integration tests, server rendering checks, and bundle size budgets
 - Consolidates documentation into `docs/` and adds support, stability, and server-rendering guidance
 

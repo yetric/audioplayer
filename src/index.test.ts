@@ -4,6 +4,7 @@ import {
   attachAudioPlayerPersistence,
   attachAudioPlayerProgressReporter,
   createAudioPlayer,
+  createLocalStoragePersistenceAdapter,
   type PersistedPlayerState,
 } from "./index";
 
@@ -492,6 +493,42 @@ describe("error handling", () => {
     expect(player.getState().status).toBe("ready");
     expect(player.getState().error).toBeNull();
     expect(player.getState().currentSourceId).toBe("episode-2");
+  });
+});
+
+describe("localStorage persistence adapter", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("saves, loads, and clears browser storage", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+      removeItem: (key: string) => data.delete(key),
+    } });
+    const adapter = createLocalStoragePersistenceAdapter("player");
+    const saved = persistedState();
+    adapter.save(saved);
+    expect(adapter.load()).toEqual(saved);
+    adapter.clear();
+    expect(adapter.load()).toBeNull();
+  });
+
+  it("handles a denied storage getter", () => {
+    vi.stubGlobal("window", { get localStorage() { throw new Error("denied"); } });
+    const adapter = createLocalStoragePersistenceAdapter("player");
+    expect(adapter.load()).toBeNull();
+    expect(() => adapter.save(persistedState())).not.toThrow();
+    expect(() => adapter.clear()).not.toThrow();
+  });
+
+  it("does not interrupt playback when storage methods fail", () => {
+    const fail = () => { throw new Error("storage unavailable"); };
+    vi.stubGlobal("window", { localStorage: { getItem: fail, setItem: fail, removeItem: fail } });
+    const adapter = createLocalStoragePersistenceAdapter("player");
+    expect(adapter.load()).toBeNull();
+    expect(() => adapter.save(persistedState())).not.toThrow();
+    expect(() => adapter.clear()).not.toThrow();
   });
 });
 

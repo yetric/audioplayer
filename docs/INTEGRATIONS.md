@@ -7,6 +7,8 @@ slug: /integrations
 
 ## Persistence
 
+The built-in localStorage adapter is best-effort: reads return `null` and writes/clears are ignored when storage is unavailable, denied, or full. Use a custom adapter if your application needs to report storage failures.
+
 ```ts
 import {
   attachAudioPlayerPersistence,

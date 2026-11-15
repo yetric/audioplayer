@@ -631,15 +631,15 @@ const createMediaSessionArtwork = (
   }));
 };
 
+/** Best-effort browser storage. Unavailable, denied, or full storage never interrupts playback. */
 export const createLocalStoragePersistenceAdapter = (
   key: string,
 ): AudioPlayerPersistenceAdapter => ({
   load() {
-    if (!isBrowserStorageAvailable()) {
-      return null;
-    }
-
     try {
+      if (!isBrowserStorageAvailable()) {
+        return null;
+      }
       const raw = window.localStorage.getItem(key);
       if (!raw) {
         return null;
@@ -653,19 +653,23 @@ export const createLocalStoragePersistenceAdapter = (
   },
 
   save(state) {
-    if (!isBrowserStorageAvailable()) {
-      return;
+    try {
+      if (isBrowserStorageAvailable()) {
+        window.localStorage.setItem(key, JSON.stringify(state));
+      }
+    } catch {
+      // Storage can become unavailable during page teardown or when its quota is full.
     }
-
-    window.localStorage.setItem(key, JSON.stringify(state));
   },
 
   clear() {
-    if (!isBrowserStorageAvailable()) {
-      return;
+    try {
+      if (isBrowserStorageAvailable()) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // Storage access may be denied even when the browser exposes localStorage.
     }
-
-    window.localStorage.removeItem(key);
   },
 });
 
