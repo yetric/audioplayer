@@ -26,6 +26,7 @@ npm run test:browser
 - Update docs when public behavior changes.
 - Add or update tests when behavior changes.
 - Documentation content lives only in `docs/`; the Docusaurus site reads it directly.
+- Linux browser tests need a working audio output. CI starts a virtual PulseAudio sink for real playback in Firefox.
 - Follow [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md). Maintainers review reports and contributions as availability permits; there is no guaranteed response time.
 
 ## Publishing
