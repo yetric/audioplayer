@@ -1,3 +1,8 @@
+---
+id: migration
+slug: /migration
+---
+
 # Migrating an Existing React Audio Layer
 
 ## Goal
@@ -47,53 +52,19 @@ Move display state to `useAudioPlayerState()`.
 ## Example app-level wiring
 
 ```tsx
-import { useEffect } from "react";
-import {
-  attachAudioPlayerMediaSession,
-  attachAudioPlayerPersistence,
-  attachAudioPlayerProgressReporter,
-  createLocalStoragePersistenceAdapter,
-} from "@yetric/audioplayer";
-import {
-  AudioPlayerProvider,
-  useAudioPlayer,
-} from "@yetric/audioplayer/react";
-
-const PlayerBootstrap = () => {
-  const player = useAudioPlayer();
-
-  useEffect(() => {
-    const persistence = attachAudioPlayerPersistence(player, {
-      adapter: createLocalStoragePersistenceAdapter("audio-player"),
-    });
-
-    const reporter = attachAudioPlayerProgressReporter(player, {
-      intervalMs: 5000,
-      onReport(snapshot) {
-        if (!snapshot.sourceId) {
-          return;
-        }
-
-        // Send the snapshot through your application's reporting API.
-        console.log(snapshot.sourceId, snapshot.currentTime);
-      },
-    });
-
-    const mediaSession = attachAudioPlayerMediaSession(player);
-
-    return () => {
-      persistence.destroy();
-      reporter.destroy();
-      mediaSession.destroy();
-    };
-  }, [player]);
-
-  return null;
-};
+import { createLocalStoragePersistenceAdapter } from "@yetric/audioplayer";
+import { AudioPlayerProvider } from "@yetric/audioplayer/react";
 
 export const AppAudioProvider = ({ children }: { children: React.ReactNode }) => (
-  <AudioPlayerProvider>
-    <PlayerBootstrap />
+  <AudioPlayerProvider
+    persistence={{ adapter: createLocalStoragePersistenceAdapter("audio-player") }}
+    mediaSession
+    progressReporter={{
+      intervalMs: 5000,
+      onReport(snapshot) {
+        console.log(snapshot.sourceId, snapshot.currentTime);
+      },
+    }}>
     {children}
   </AudioPlayerProvider>
 );
@@ -117,7 +88,7 @@ const source = {
 ## UI migration notes
 
 - `PlayButton` should call `player.play(source)` for first play
-- player timeline should read from `useAudioPlayerState().progress`
+- player timeline should read from `useAudioPlayerProgress()`
 - speed controls should call `player.setRate(rate)`
 - next/previous buttons should call `player.next()` and `player.previous()`
 - queue UI should read from `useAudioPlayerState().queue`

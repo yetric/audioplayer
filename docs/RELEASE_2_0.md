@@ -61,7 +61,7 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 2.0 does not ship on features alone. It ships when these are true. Details and the path through 1.x are in [`DOCS_PLAN.md`](./DOCS_PLAN.md).
 
 - **World-class online documentation:** a published, searchable, versioned site with quickstarts per framework, concepts, recipes, a generated API reference, troubleshooting, and a 1.x to 2.0 migration guide.
-- **LLM support:** `llms.txt` and Markdown pages, JSDoc on every public symbol, usage notes in the package, tested examples, and evals that track how well assistants build with the docs.
+- **LLM support:** `llms.txt` and Markdown pages, JSDoc where types are not enough, usage notes in the package, tested examples, and evals that track how well assistants build with the docs.
 - **Really good demos:** a hosted gallery led by a flagship chapters and cards player, own-hosted licensed audio, and starters for each framework.
 
 ## Candidate breaking changes

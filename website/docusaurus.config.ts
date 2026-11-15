@@ -23,8 +23,9 @@ const config: Config = {
       'classic',
       {
         docs: {
+          path: '../docs',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/yetric/audioplayer/tree/main/website/',
+          editUrl: 'https://github.com/yetric/audioplayer/tree/main/docs/',
         },
         blog: false,
         theme: {

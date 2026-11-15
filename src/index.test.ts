@@ -4,6 +4,7 @@ import {
   attachAudioPlayerPersistence,
   attachAudioPlayerProgressReporter,
   createAudioPlayer,
+  createLocalStoragePersistenceAdapter,
   type PersistedPlayerState,
 } from "./index";
 
@@ -262,6 +263,75 @@ describe("createAudioPlayer", () => {
   });
 });
 
+describe("skip", () => {
+  beforeEach(() => {
+    MockAudio.instances = [];
+    MockAudio.asyncLoad = false;
+    MockAudio.deferLoad = false;
+    vi.stubGlobal("Audio", MockAudio);
+  });
+
+  const loadAt = async (time: number, duration: number) => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const audio = MockAudio.instances[0];
+    audio.duration = duration;
+    audio.currentTime = time;
+    audio.dispatch("timeupdate");
+    return { player, audio };
+  };
+
+  it("skips forward and back from the current position", async () => {
+    const { player, audio } = await loadAt(50, 100);
+
+    player.skip(10);
+    expect(audio.currentTime).toBe(60);
+    audio.dispatch("timeupdate");
+
+    player.skip(-30);
+    expect(audio.currentTime).toBe(30);
+  });
+
+  it("clamps at the start and at the known duration", async () => {
+    const { player, audio } = await loadAt(5, 100);
+
+    player.skip(-30);
+    expect(audio.currentTime).toBe(0);
+
+    audio.currentTime = 95;
+    audio.dispatch("timeupdate");
+    player.skip(30);
+    expect(audio.currentTime).toBe(100);
+  });
+
+  it("advances from the current time while the duration is unknown", async () => {
+    const { player, audio } = await loadAt(20, 0);
+
+    player.skip(15);
+
+    expect(audio.currentTime).toBe(35);
+  });
+
+  it("sets a seek error without a source", () => {
+    const player = createAudioPlayer();
+
+    player.skip(10);
+
+    expect(player.getState().error?.code).toBe("SEEK_ERROR");
+  });
+
+  it("rejects NaN for skip and seek without moving", async () => {
+    const { player, audio } = await loadAt(40, 100);
+
+    player.skip(Number.NaN);
+    expect(player.getState().error?.code).toBe("SEEK_ERROR");
+    expect(audio.currentTime).toBe(40);
+
+    player.seek(Number.NaN);
+    expect(audio.currentTime).toBe(40);
+  });
+});
+
 describe("queue navigation", () => {
   beforeEach(() => {
     MockAudio.instances = [];
@@ -423,6 +493,42 @@ describe("error handling", () => {
     expect(player.getState().status).toBe("ready");
     expect(player.getState().error).toBeNull();
     expect(player.getState().currentSourceId).toBe("episode-2");
+  });
+});
+
+describe("localStorage persistence adapter", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("saves, loads, and clears browser storage", () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => data.set(key, value),
+      removeItem: (key: string) => data.delete(key),
+    } });
+    const adapter = createLocalStoragePersistenceAdapter("player");
+    const saved = persistedState();
+    adapter.save(saved);
+    expect(adapter.load()).toEqual(saved);
+    adapter.clear();
+    expect(adapter.load()).toBeNull();
+  });
+
+  it("handles a denied storage getter", () => {
+    vi.stubGlobal("window", { get localStorage() { throw new Error("denied"); } });
+    const adapter = createLocalStoragePersistenceAdapter("player");
+    expect(adapter.load()).toBeNull();
+    expect(() => adapter.save(persistedState())).not.toThrow();
+    expect(() => adapter.clear()).not.toThrow();
+  });
+
+  it("does not interrupt playback when storage methods fail", () => {
+    const fail = () => { throw new Error("storage unavailable"); };
+    vi.stubGlobal("window", { localStorage: { getItem: fail, setItem: fail, removeItem: fail } });
+    const adapter = createLocalStoragePersistenceAdapter("player");
+    expect(adapter.load()).toBeNull();
+    expect(() => adapter.save(persistedState())).not.toThrow();
+    expect(() => adapter.clear()).not.toThrow();
   });
 });
 

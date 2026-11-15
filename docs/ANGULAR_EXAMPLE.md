@@ -1,3 +1,8 @@
+---
+id: angular
+slug: /angular
+---
+
 # Angular Example
 
 ## Goal

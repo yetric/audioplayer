@@ -1,3 +1,8 @@
+---
+id: core-api
+slug: /core-api
+---
+
 # Core Guide
 
 ## Mental model
@@ -85,6 +90,7 @@ player.setRepeatMode("all");
 ```ts
 player.pause();
 player.seek(120);
+player.skip(-10); // relative, negative goes back
 player.setRate(1.25);
 player.setVolume(0.8);
 player.setMuted(false);

@@ -6,13 +6,13 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.1.1` is the current stable release.
+`1.2.0` is the current stable release.
 
-Recommended current focus:
+`1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 
-- use the browser package
-- validate playback through this repo's tests, demos, and framework examples
-- treat React Native support as later work
+Use it for browser audio apps that need playback and queue state without a prescribed UI. The core works with vanilla JS and any framework; React integration is included on a separate export. React Native playback is not shipped.
+
+[Support matrix](./docs/SUPPORT.md) | [Stability policy](./docs/STABILITY.md) | [Server rendering](./docs/SERVER_RENDERING.md)
 
 ## Install
 
@@ -76,7 +76,7 @@ The stable browser API supports:
 - persisted resume state
 - Media Session integration
 
-## Early API Shape
+## Core API
 
 ```ts
 import { createAudioPlayer } from "@yetric/audioplayer";
@@ -102,18 +102,12 @@ const unsubscribe = player.subscribe((state) => {
 
 The public API should stay small. Extra behavior like persistence, progress pings, analytics, and Media Session should be opt-in modules or config hooks around the same core. The first persistence target is `localStorage`, but the design should leave room for custom storage backends later. UI consumers should mostly read state through `subscribe(...)`, while integrations can rely on typed events instead of diffing state manually.
 
-## Planned Package Surface
+## Package exports
 
-- `@yetric/audioplayer`
-  - headless browser player core
-  - queue support
-  - persistence hooks
-  - Media Session integration
-- later:
-  - `@yetric/audioplayer-react`
-    - provider-owned singleton player for app-level usage
-    - hook-based consumption on top of the provider
-  - `@yetric/audioplayer-rn`
+- `@yetric/audioplayer`: browser core, queue, persistence, progress reporting, Media Session, and public types
+- `@yetric/audioplayer/react`: provider, state selectors, and throttled progress hook (React 18+)
+
+The browser runtime does not require Node on an end user's device. See the support matrix for repository build requirements and tested environments.
 
 ## Repo Docs
 
@@ -138,7 +132,7 @@ The public API should stay small. Extra behavior like persistence, progress ping
 
 ## External Docs
 
-- Docusaurus site source: [`website/`](./website/)
+- Docusaurus configuration: [`website/`](./website/). All documentation content lives in [`docs/`](./docs/).
 - Local dev: `npm run docs:start`
 - Production build: `npm run docs:build`
 
@@ -149,6 +143,8 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - Preview demo build: `npm run demo:preview`
 
 ## Examples
+
+Run the React example with `npm run build` followed by `npm run example:react`.
 
 - [`examples/vanilla/index.html`](./examples/vanilla/index.html)
 - [`examples/vanilla/playlist-demo.js`](./examples/vanilla/playlist-demo.js)

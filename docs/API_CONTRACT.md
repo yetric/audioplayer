@@ -1,3 +1,8 @@
+---
+id: api-contract
+slug: /api-contract
+---
+
 # API Contract
 
 This document freezes the intended `Issue 001` contract for `1.0.0`.
@@ -19,7 +24,7 @@ The current implementation target is a browser `HTMLAudioElement` engine. Non-br
 
 ## Main Types
 
-See [src/index.ts](/home/hising/src/github/yetric/audioplayer/src/index.ts) for the canonical type definitions.
+See [src/index.ts](https://github.com/yetric/audioplayer/blob/main/src/index.ts) for the canonical type definitions.
 
 Primary exported types:
 
@@ -44,6 +49,7 @@ Primary exported types:
 - `AudioPlayerProvider`
 - `useAudioPlayer`
 - `useAudioPlayerState`
+- `useAudioPlayerProgress`
 
 ## Command Semantics
 
@@ -115,6 +121,13 @@ Primary exported types:
 - Clamps to `>= 0`
 - Clamps to duration when duration is known
 - `1.0` contract should not throw for normal out-of-range values
+- Sets a `SEEK_ERROR` without an active source, or when `time` is `NaN`
+
+### `skip(seconds)`
+
+- Seeks relative to the current position, so negative values go back
+- Follows the clamping and errors of `seek(time)`
+- While the duration is unknown, a forward skip advances from the current time with no upper limit
 
 ### `setRate(rate)`
 

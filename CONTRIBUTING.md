@@ -13,6 +13,10 @@ npm test
 npm run check
 npm run build
 npm run docs:build
+npm run test:package
+npm run check:size
+npx playwright install chromium firefox webkit
+npm run test:browser
 ```
 
 ## Working rules
@@ -21,6 +25,9 @@ npm run docs:build
 - Prefer the simplest working change.
 - Update docs when public behavior changes.
 - Add or update tests when behavior changes.
+- Documentation content lives only in `docs/`; the Docusaurus site reads it directly.
+- Linux browser tests need a working audio output. CI starts a virtual PulseAudio sink for real playback in Firefox.
+- Follow [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md). Maintainers review reports and contributions as availability permits; there is no guaranteed response time.
 
 ## Publishing
 

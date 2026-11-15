@@ -1,6 +1,6 @@
 # 1.2: Less Glue Code
 
-Status: proposed. Additive only, no breaking changes.
+Status: implementation complete. Additive only, no breaking changes.
 
 ## Theme
 
@@ -26,7 +26,7 @@ Reduce the integration code needed to build an audio app with the core API and R
 | Browser-level tests with a real runner, covering load, seek, ended, auto-advance | P1 | L | Closes Issue 011. Run in CI. |
 | Recipes and the React guide updated to show the provider with plugins | P1 | S | Docs are part of done |
 | Keep the docs site published, remove template leftovers, merge `docs/` and `website/docs/` into one source | P0 | M | The site is published. Consolidation remains. See `DOCS_PLAN.md`. |
-| JSDoc on every public symbol | P0 | M | Helps editors and assistants |
+| JSDoc where the type cannot say enough: units, defaults, side effects, error behavior, edge cases | P0 | M | Skip comments that restate the type. |
 | README rewrite for newcomers, with a scope statement | P0 | S | See `OPEN_SOURCE.md` |
 | Support matrix, `engines` review and a stability policy | P0 | S | Matrix is backed by the browser tests |
 | Server rendering recipe with a Node import test, bundle size budget in CI, `CODE_OF_CONDUCT.md` | P1 | S | See `OPEN_SOURCE.md` |
@@ -57,3 +57,12 @@ Reduce the integration code needed to build an audio app with the core API and R
 ## Release gate
 
 Publish a prerelease (`1.2.0-beta.1`), pass the automated checks and browser tests, and verify the browser demo and React example before promoting to `1.2.0`. External app adoption is not a release gate.
+
+## Delivery status
+
+- Implemented: relative seeking, provider-managed plugins, state selectors, and the throttled progress hook.
+- Added: real-audio browser tests, React persistence and demo browser checks, server import/render tests, and bundle-size checks.
+- Docs: one canonical `docs/` source, support matrix, stability policy, SSR recipe, provider recipes, and a code of conduct.
+- Compatibility: React 18 and 19 checks in CI, Chromium/Firefox/WebKit playback checks, ESM and CommonJS package checks.
+- Deferred: rate presets and `cycleRate()`. The demo already has a rate selector; an extra helper has no demonstrated need.
+- Release gate: CI must pass and the published beta package and repository demos must be verified before stable promotion.

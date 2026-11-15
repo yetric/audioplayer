@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>Audio player browser tests</title></head>
+  <body>
+    <button id="play">Play</button>
+    <script type="module">
+      import { createAudioPlayer } from "/dist/index.js";
+      window.player = createAudioPlayer();
+      document.querySelector("#play").onclick = () => window.player.play();
+    </script>
+  </body>
+</html>
