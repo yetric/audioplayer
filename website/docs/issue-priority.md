@@ -1,8 +1,6 @@
 # Issue Priority
 
-Priority is driven by one question:
-
-Can this help replace the current `podcast-app` player?
+Prioritize reliable browser playback, a small framework-agnostic API, and changes that can be validated through repository tests and examples. No consuming application is a release requirement.
 
 ## Completed
 

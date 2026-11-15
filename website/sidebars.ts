@@ -10,7 +10,7 @@ const sidebars: SidebarsConfig = {
     },
     'react',
     'integrations',
-    'podcast-app-migration',
+    'migration',
     'angular',
     'web-components',
     'roadmap',

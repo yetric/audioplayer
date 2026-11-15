@@ -1,6 +1,6 @@
 # Open Source Track
 
-The library is public on npm and MIT licensed. `podcast-app` is the first consumer, not the only one. This doc covers what an outside user needs and which release carries each item. Release docs: [`RELEASE_1_2.md`](./RELEASE_1_2.md), [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`RELEASE_1_4.md`](./RELEASE_1_4.md), [`RELEASE_2_0.md`](./RELEASE_2_0.md).
+The library is public on npm and MIT licensed. Its scope, validation, and releases are maintained independently of any consuming app. This doc covers what an outside user needs and which release carries each item. Release docs: [`RELEASE_1_2.md`](./RELEASE_1_2.md), [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`RELEASE_1_4.md`](./RELEASE_1_4.md), [`RELEASE_2_0.md`](./RELEASE_2_0.md).
 
 ## Where we are
 
@@ -12,11 +12,11 @@ Exists:
 - ESM, CJS and type declarations, `sideEffects: false`, about 7 KB gzipped for the main chunk
 - Docs site, `examples/` (vanilla and React), Angular and Web Component docs
 - Releases published from CI with provenance (since 1.1.0)
+- README positioning and release gates are independent of any consuming app.
 - Importing and creating a player in Node works and does not throw. `load` on a server returns the typed `UNSUPPORTED_ENVIRONMENT` error. This is not documented yet.
 
 Gaps:
 
-- The README speaks to one consumer: "validate it in `podcast-app`", and a milestone line that says the library is not a generic media player. A newcomer cannot tell what it is for.
 - No supported browser or runtime matrix. `engines` says `node >=22`, which is a build requirement but reads as a consumer requirement for a browser library.
 - No stability or deprecation policy, so nobody can tell how safe `^1.x` is.
 - No code of conduct. GitHub Discussions are off, so there is no place for questions or use-case reports.
@@ -27,7 +27,7 @@ Gaps:
 
 ## Audience and scope
 
-Hypothesis to validate: other users are building music, audiobook, radio, language-learning or meditation apps, not only podcast apps. They would ask for features the code does not have today: shuffle, gapless or crossfade playback, A-B loop.
+Candidate use cases include podcasts, music, audiobooks, radio, language learning, and meditation. Possible requests include features the code does not have today: shuffle, gapless or crossfade playback, A-B loop. Validate demand before adding them.
 
 Documentation, LLM support and demos are the adoption lever for outside users. See [`DOCS_PLAN.md`](./DOCS_PLAN.md).
 
@@ -36,14 +36,14 @@ Differentiator to aim for: clients that look and feel rich. Timeline events (cha
 Proposed scope statement for the README:
 
 - The library is a headless, browser-first audio player with a queue, persistence and Media Session.
-- Podcast and long-form listening is the first-class use case and the tie-breaker for priorities.
-- Other uses are welcome. A feature for them is accepted when it fits the small public API and has a named user.
+- Prioritize reliable playback and common listening flows across audio applications.
+- Accept features when they fit the small public API, have a documented use case, and can be validated with tests and examples.
 
 ## Work items
 
 | Item | Release | Priority | Size |
 | ---- | ------- | -------- | ---- |
-| Rewrite README status and intro for newcomers, with the scope statement and a short "who is this for" | 1.2 | P0 | S |
+| Keep README status and intro focused on standalone usage; add a short "who is this for" | 1.2 | P0 | S |
 | Support matrix doc: browsers (verified by the browser tests on Chromium, Firefox and WebKit), React versions, module formats | 1.2 | P0 | S |
 | Review `engines`, and say plainly that consumers need no particular Node version | 1.2 | P0 | S |
 | Stability policy: semver, deprecations last at least one minor release and are noted in the changelog, breaking changes only in a major | 1.2 | P1 | S |
@@ -71,6 +71,6 @@ Proposed scope statement for the README:
 
 ## Open questions
 
-- Is the target audience podcast apps only, or long-form and general audio?
+- Which additional audio use cases can be supported without expanding the core API?
 - Should the project move under an npm organization before wider promotion?
 - Do you want to announce the library (blog post, socials) before 1.2, or after the README and docs are ready?
