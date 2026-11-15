@@ -4,6 +4,7 @@
 - Prefer editing over rewriting whole files.
 - Do not re-read files you have already read.
 - Test your code before declaring done.
+- Prefer current web media APIs with runtime capability detection and tested fallbacks. Review MDN media guidance, compatibility data, and primary specifications when designing features and preparing releases.
 - No sycophantic openers or closing fluff.
 - Keep solutions simple and direct.
 - User instructions always override this file.

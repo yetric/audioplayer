@@ -1,6 +1,6 @@
 # 1.3: Timed Multimedia Metadata
 
-Status: first milestone prepared as `1.3.0-beta.1`. Additive only, no breaking changes. Stable npm installs remain on 1.2.0; install `@yetric/audioplayer@beta` to evaluate timed metadata before promotion.
+Status: first milestone published as `1.3.0-beta.1`. Additive only, no breaking changes. Stable npm installs remain on 1.2.0; install `@yetric/audioplayer@beta` to evaluate timed metadata before promotion.
 
 Implemented API and demo instructions: [Timed metadata](./TIMED_METADATA.md).
 

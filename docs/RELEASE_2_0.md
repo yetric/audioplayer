@@ -27,17 +27,18 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 - First-class `sources[]` per item for format fallback (for example opus then mp3).
 - Breaking candidate: `AudioSource.src` becomes `sources`, with a migration helper.
 
-### 3. Adaptive streaming and casting
+### 3. Adaptive streaming and advanced remote playback
 
 - HLS and DASH through an engine, for example one built on hls.js.
-- Chromecast and AirPlay through engines or plugins.
+- Native AirPlay/output selection and an optional Google Cast adapter are now proposed for 1.4, subject to additive API and hardware validation. See [the 1.4 plan](./RELEASE_1_4.md).
+- A minimal receiver and optional backend needed for 1.4 media authorization/renewal are included in the 1.4 plan. Consider a multimedia receiver UI, additional service-specific playback backends, and multi-room control after that destination contract is validated. Spotify Connect needs a separate feasibility decision rather than a generic casting promise.
 - Open question: is this in scope for a headless browser audio library, or a different package?
 
 ### 4. Sync and listening history
 
 - A remote persistence adapter contract, so positions and queue can sync across devices.
 - Standard listening-event schema for stats and analytics, compatible with podcast measurement approaches.
-- The library still does not own network requests. It defines the contract only.
+- The browser core still delegates network access to application-supplied adapters. The optional playback backend proposed for 1.4 does not imply an account-sync or listening-history service.
 
 ### 5. Time-aligned content
 
@@ -72,7 +73,7 @@ Collect them as they come up during 1.x. Do not break anything in 1.x.
 | ------ | --- | --------- |
 | `sources[]` replaces `src` | Format fallback | Codemod or helper |
 | Drop CJS | Smaller package, simpler exports | Use ESM or a bundler |
-| Status model redesign if the 1.4 buffering flag proves limiting | Clearer states | Documented mapping |
+| Status model redesign if additive buffering/destination state proves limiting | Clearer states | Documented mapping |
 
 ## Decision gate
 
@@ -87,4 +88,4 @@ Before that, keep shipping 1.x. If the gate is met, write a design note per them
 ## Explicitly not planned
 
 - A UI component library. The library stays headless.
-- Owning network, auth or DRM.
+- A mandatory hosted platform, a general account system, or DRM. Optional playback services needed by a supported integration remain separately deployable and outside the browser core.
