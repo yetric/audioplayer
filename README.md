@@ -6,9 +6,9 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.1.1` is the current stable release.
+`1.2.0` is the current stable release.
 
-`1.2.0-beta.1` is the prerelease for less integration code: relative seeking, provider-managed plugins, state selectors, and throttled React progress.
+`1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 
 Use it for browser audio apps that need playback and queue state without a prescribed UI. The core works with vanilla JS and any framework; React integration is included on a separate export. React Native playback is not shipped.
 

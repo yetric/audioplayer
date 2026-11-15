@@ -1,6 +1,6 @@
 # 1.2: Less Glue Code
 
-Status: implementation complete; prerelease validation in progress. Additive only, no breaking changes.
+Status: implementation complete. Additive only, no breaking changes.
 
 ## Theme
 
@@ -65,4 +65,4 @@ Publish a prerelease (`1.2.0-beta.1`), pass the automated checks and browser tes
 - Docs: one canonical `docs/` source, support matrix, stability policy, SSR recipe, provider recipes, and a code of conduct.
 - Compatibility: React 18 and 19 checks in CI, Chromium/Firefox/WebKit playback checks, ESM and CommonJS package checks.
 - Deferred: rate presets and `cycleRate()`. The demo already has a rate selector; an extra helper has no demonstrated need.
-- Release gate: CI must pass, the beta must be published and its packed exports verified, then promote the same feature set to stable.
+- Release gate: CI must pass and the published beta package and repository demos must be verified before stable promotion.
