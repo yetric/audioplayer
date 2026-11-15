@@ -1,3 +1,8 @@
+---
+id: web-components
+slug: /web-components
+---
+
 # Web Component Example
 
 ## Goal

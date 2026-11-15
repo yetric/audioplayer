@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
 import {
@@ -16,6 +17,7 @@ import {
   type AudioPlayerPersistenceOptions,
   type AudioPlayerProgressReporterOptions,
   type AudioPlayerState,
+  type AudioPlayerProgressState,
   type CreateAudioPlayerOptions,
   type PersistedPlayerState,
 } from "./index.js";
@@ -195,4 +197,53 @@ export function useAudioPlayerState<T>(
   };
 
   return useSyncExternalStore(player.subscribe, getSnapshot, getSnapshot);
+}
+
+export interface AudioPlayerProgressOptions {
+  /** Minimum delay between playback updates in milliseconds. Defaults to 250. */
+  intervalMs?: number;
+}
+
+/** Throttles state notifications without polling. Seeks and playback transitions update immediately. */
+export function useAudioPlayerProgress({
+  intervalMs = 250,
+}: AudioPlayerProgressOptions = {}): AudioPlayerProgressState {
+  if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
+    throw new RangeError("intervalMs must be a positive finite number.");
+  }
+
+  const player = useAudioPlayer();
+  const [progress, setProgress] = useState(() => player.getState().progress);
+
+  useEffect(() => {
+    let previous = player.getState();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => {
+      clearTimeout(timer);
+      timer = undefined;
+      setProgress(player.getState().progress);
+    };
+
+    flush();
+    const unsubscribe = player.subscribe((state) => {
+      const immediate = state.status !== previous.status ||
+        state.currentSourceId !== previous.currentSourceId;
+      const changed = state.progress !== previous.progress;
+      previous = state;
+      if (immediate) {
+        flush();
+      } else if (changed && timer === undefined) {
+        timer = setTimeout(flush, intervalMs);
+      }
+    });
+    const offSeeked = player.on("seeked", flush);
+
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+      offSeeked();
+    };
+  }, [player, intervalMs]);
+
+  return progress;
 }

@@ -8,12 +8,11 @@ A developer, or their coding assistant, can find the library, get sound playing 
 
 ## Where we are
 
-Checked against the repo and GitHub on the 1.1.0 line:
+Current foundation for 1.2:
 
-- The Docusaurus site is configured for `https://yetric.github.io/audioplayer/`, but GitHub Pages is not enabled and there is no deploy workflow. The docs are not published from this repo. (If they are hosted elsewhere, this note is wrong on that point.)
-- The site still has template leftovers: an empty tutorial folder and a 2021 "welcome" blog post.
-- The docs exist twice, in `docs/` and `website/docs/`. The copies differ in length and content, so they will drift.
-- No JSDoc comments on the public API (`src/index.ts` has none), so editors and assistants see types but no explanations.
+- GitHub Pages publishes the Docusaurus site from CI.
+- `docs/` is the single documentation source. The site reads it directly, preserving the existing primary page URLs.
+- Public API comments explain units, defaults, side effects, and edge cases where types are insufficient.
 - No generated API reference, no site search, no versioned docs.
 - Demos: a small Vite demo (`demo/`) and examples (`examples/react`, `examples/vanilla`). The demo audio is hot-linked from a third-party host.
 - No `llms.txt`, and nothing in the npm package that explains usage to an assistant.
@@ -76,7 +75,7 @@ Quality rules:
 
 | Release | Work |
 | ------- | ---- |
-| 1.2 | Publish the docs site (enable Pages and add a deploy workflow, or choose another host). Remove template leftovers. Merge `docs/` and `website/docs/` into one source. Add JSDoc where types cannot say enough. |
+| 1.2 | Published site and single `docs/` source. Add JSDoc where types cannot say enough, support and stability guidance, server-rendering coverage, and runnable examples. |
 | 1.3 | Generate the API reference. Add site search. Ship the flagship chapters demo and host the demo gallery. Compile-check docs snippets in CI. |
 | 1.4 | Add `llms.txt` and `llms-full.txt`, Markdown page export, the troubleshooting section, and the first LLM evals. Add two more demos. |
 | 2.0 | Versioned docs, the migration guide and codemod, the full demo set, evals gating the release, and a reviewed quickstart for every supported framework. |

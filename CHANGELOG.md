@@ -6,10 +6,18 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## Unreleased
 
+- No unreleased changes yet
+
+## 1.2.0-beta.1 - 2026-11-15
+
 - Adds `player.skip(seconds)` for relative seeking. Media Session seek buttons now use it.
 - `seek(NaN)` now sets a `SEEK_ERROR` instead of producing an invalid position
 - `AudioPlayerProvider` accepts `persistence` (with `onRestore`), `mediaSession` and `progressReporter` options and attaches and detaches them itself
 - `useAudioPlayerState(selector, isEqual?)` re-renders only when the selected value changes
+- Adds `useAudioPlayerProgress({ intervalMs })` for throttled, event-driven timeline updates
+- Fixes persistence restoration under React StrictMode
+- Adds real-browser playback and React integration tests, server rendering checks, and bundle size budgets
+- Consolidates documentation into `docs/` and adds support, stability, and server-rendering guidance
 
 ## 1.1.1 - 2026-11-15
 

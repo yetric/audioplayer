@@ -1,3 +1,8 @@
+---
+id: api-contract
+slug: /api-contract
+---
+
 # API Contract
 
 This document freezes the intended `Issue 001` contract for `1.0.0`.
@@ -19,7 +24,7 @@ The current implementation target is a browser `HTMLAudioElement` engine. Non-br
 
 ## Main Types
 
-See [src/index.ts](/home/hising/src/github/yetric/audioplayer/src/index.ts) for the canonical type definitions.
+See [src/index.ts](https://github.com/yetric/audioplayer/blob/main/src/index.ts) for the canonical type definitions.
 
 Primary exported types:
 
@@ -44,6 +49,7 @@ Primary exported types:
 - `AudioPlayerProvider`
 - `useAudioPlayer`
 - `useAudioPlayerState`
+- `useAudioPlayerProgress`
 
 ## Command Semantics
 

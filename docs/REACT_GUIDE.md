@@ -1,3 +1,8 @@
+---
+id: react
+slug: /react
+---
+
 # React Guide
 
 ## Install
@@ -13,7 +18,6 @@ import { AudioPlayerProvider } from "@yetric/audioplayer/react";
 
 export const App = () => (
   <AudioPlayerProvider>
-    <PlayerBootstrap />
     <Routes />
   </AudioPlayerProvider>
 );
@@ -103,3 +107,20 @@ const progress = useAudioPlayerState(
 - React does not own the playback engine.
 - React does not copy player state into a second store.
 - `useAudioPlayerState()` subscribes to the same core state every other framework can use.
+
+## Throttled progress for a timeline
+
+```tsx
+import { useAudioPlayerProgress } from "@yetric/audioplayer/react";
+
+export const Timeline = () => {
+  const progress = useAudioPlayerProgress({ intervalMs: 250 });
+  return <progress max={1} value={progress.playedFraction} />;
+};
+```
+
+The hook returns `AudioPlayerProgressState` and listens to player notifications without polling. During playback it coalesces updates over `intervalMs` milliseconds (default 250). Source changes, playback status changes, and completed seeks update immediately. Unmounting clears pending work. The interval must be a positive finite number; invalid values throw `RangeError`.
+
+Use this hook in a separate timeline component. A parent using the whole-state hook will still re-render on every state update. For backend reporting, use `progressReporter` instead.
+
+For server-rendered apps, see [Server rendering](./SERVER_RENDERING.md).

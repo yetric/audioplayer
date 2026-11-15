@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -33,8 +33,35 @@ jobs:
       - name: Build package
         run: npm run build
 
+      - name: Verify server imports and React rendering
+        run: npm run test:package
+
+      - name: Check bundle size
+        run: npm run check:size
+
+      - name: Install browser test engines
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Browser tests
+        run: npm run test:browser
+
+      - name: Build examples
+        run: npm run check:examples && npm run demo:build && npm run example:react:build
+
       - name: Typecheck docs
         run: npm run typecheck --workspace website
 
       - name: Build docs
         run: npm run docs:build
+
+  react18:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save --package-lock=false --ignore-scripts react@18 react-dom@18
+      - run: npm test && npm run test:package

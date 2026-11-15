@@ -1,8 +1,5 @@
 import { useEffect } from "react";
 import {
-  attachAudioPlayerMediaSession,
-  attachAudioPlayerPersistence,
-  attachAudioPlayerProgressReporter,
   createLocalStoragePersistenceAdapter,
 } from "../../dist/index.js";
 import {
@@ -32,26 +29,11 @@ const Bootstrap = () => {
   const player = useAudioPlayer();
 
   useEffect(() => {
-    const persistence = attachAudioPlayerPersistence(player, {
-      adapter: createLocalStoragePersistenceAdapter("react-podcast-demo"),
-    });
-    const reporter = attachAudioPlayerProgressReporter(player, {
-      onReport(snapshot) {
-        console.log("progress", snapshot);
-      },
-    });
-    const mediaSession = attachAudioPlayerMediaSession(player);
-
     void player.setQueue(queue, {
       startAtId: "episode-1",
       autoplay: false,
     });
 
-    return () => {
-      persistence.destroy();
-      reporter.destroy();
-      mediaSession.destroy();
-    };
   }, [player]);
 
   return null;
@@ -74,7 +56,10 @@ const Screen = () => {
 };
 
 export const PodcastPlayerDemo = () => (
-  <AudioPlayerProvider>
+  <AudioPlayerProvider
+    persistence={{ adapter: createLocalStoragePersistenceAdapter("react-podcast-demo"), autoRestore: false }}
+    mediaSession
+    progressReporter={{ onReport: (snapshot) => console.log("progress", snapshot) }}>
     <Bootstrap />
     <Screen />
   </AudioPlayerProvider>

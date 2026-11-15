@@ -8,7 +8,7 @@ import {
   type AudioPlayerState,
   type PersistedPlayerState,
 } from "./index";
-import { AudioPlayerProvider, useAudioPlayer, useAudioPlayerState } from "./react";
+import { AudioPlayerProvider, useAudioPlayer, useAudioPlayerState, useAudioPlayerProgress } from "./react";
 
 class FakeAudio {
   static instances: FakeAudio[] = [];
@@ -95,6 +95,8 @@ describe("react adapter", () => {
     act(() => {
       root.unmount();
     });
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("throws when used outside the provider", () => {
@@ -282,6 +284,93 @@ describe("react adapter", () => {
       );
 
       expect(captured.state).toBe(player.getState());
+    });
+  });
+
+  describe("useAudioPlayerProgress", () => {
+    it("coalesces updates, flushes on pause and seek, and cancels pending work on unmount", async () => {
+      vi.useFakeTimers();
+      const player = createAudioPlayer();
+      await player.load(episode);
+      await player.play();
+      const audio = FakeAudio.instances[0];
+      let time = -1;
+      let renders = 0;
+      const Progress = () => {
+        time = useAudioPlayerProgress({ intervalMs: 500 }).currentTime;
+        renders += 1;
+        return null;
+      };
+      render(<AudioPlayerProvider player={player}><Progress /></AudioPlayerProvider>);
+      const initialRenders = renders;
+      act(() => vi.advanceTimersByTime(1000));
+      expect(renders).toBe(initialRenders);
+
+      act(() => {
+        audio.currentTime = 1;
+        audio.dispatch("timeupdate");
+        vi.advanceTimersByTime(250);
+        audio.currentTime = 2;
+        audio.dispatch("timeupdate");
+      });
+      expect(time).toBe(0);
+      act(() => vi.advanceTimersByTime(250));
+      expect(time).toBe(2);
+      expect(renders).toBe(initialRenders + 1);
+
+      act(() => {
+        audio.currentTime = 3;
+        audio.dispatch("timeupdate");
+        player.pause();
+      });
+      expect(time).toBe(3);
+      act(() => {
+        audio.currentTime = 10;
+        audio.dispatch("seeked");
+      });
+      expect(time).toBe(10);
+      act(() => {
+        audio.currentTime = 11;
+        audio.dispatch("timeupdate");
+      });
+      expect(vi.getTimerCount()).toBe(1);
+      act(() => root.unmount());
+      expect(vi.getTimerCount()).toBe(0);
+      root = createRoot(container);
+      player.destroy();
+    });
+
+    it("updates immediately for a replacement source and uses a changed interval", async () => {
+      vi.useFakeTimers();
+      const player = createAudioPlayer();
+      await player.load(episode);
+      let time = -1;
+      const Progress = ({ intervalMs }: { intervalMs: number }) => {
+        time = useAudioPlayerProgress({ intervalMs }).currentTime;
+        return null;
+      };
+      const screen = (intervalMs: number) => <AudioPlayerProvider player={player}><Progress intervalMs={intervalMs} /></AudioPlayerProvider>;
+      render(screen(500));
+      act(() => {
+        FakeAudio.instances[0].currentTime = 20;
+        FakeAudio.instances[0].dispatch("seeked");
+      });
+      expect(time).toBe(20);
+      await act(async () => { await player.load({ ...episode, id: "second" }); });
+      expect(time).toBe(0);
+      render(screen(100));
+      act(() => {
+        FakeAudio.instances[0].currentTime = 1;
+        FakeAudio.instances[0].dispatch("timeupdate");
+        vi.advanceTimersByTime(100);
+      });
+      expect(time).toBe(1);
+      player.destroy();
+    });
+
+    it("rejects an invalid interval", () => {
+      const Progress = () => { useAudioPlayerProgress({ intervalMs: 0 }); return null; };
+      expect(() => render(<AudioPlayerProvider><Progress /></AudioPlayerProvider>)).toThrow(RangeError);
     });
   });
 

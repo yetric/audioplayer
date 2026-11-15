@@ -1,3 +1,8 @@
+---
+id: intro
+slug: /intro
+---
+
 # Getting Started
 
 ## Install

@@ -1,6 +1,6 @@
 # 1.2: Less Glue Code
 
-Status: proposed. Additive only, no breaking changes.
+Status: implementation complete; prerelease validation in progress. Additive only, no breaking changes.
 
 ## Theme
 
@@ -57,3 +57,12 @@ Reduce the integration code needed to build an audio app with the core API and R
 ## Release gate
 
 Publish a prerelease (`1.2.0-beta.1`), pass the automated checks and browser tests, and verify the browser demo and React example before promoting to `1.2.0`. External app adoption is not a release gate.
+
+## Delivery status
+
+- Implemented: relative seeking, provider-managed plugins, state selectors, and the throttled progress hook.
+- Added: real-audio browser tests, React persistence and demo browser checks, server import/render tests, and bundle-size checks.
+- Docs: one canonical `docs/` source, support matrix, stability policy, SSR recipe, provider recipes, and a code of conduct.
+- Compatibility: React 18 and 19 checks in CI, Chromium/Firefox/WebKit playback checks, ESM and CommonJS package checks.
+- Deferred: rate presets and `cycleRate()`. The demo already has a rate selector; an extra helper has no demonstrated need.
+- Release gate: CI must pass, the beta must be published and its packed exports verified, then promote the same feature set to stable.

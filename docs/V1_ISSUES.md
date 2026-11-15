@@ -1,3 +1,8 @@
+---
+id: issue-priority
+slug: /issue-priority
+---
+
 # Pre-1.0 Issue List
 
 Historical planning checklist for the initial stable API. Priorities are reliable browser playback, a small framework-agnostic API, and reproducible tests and examples.

@@ -1,3 +1,8 @@
+---
+id: core-api
+slug: /core-api
+---
+
 # Core Guide
 
 ## Mental model

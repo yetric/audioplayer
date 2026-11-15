@@ -24,12 +24,14 @@ export type AudioPlayerEventName =
   | "destroy";
 
 export interface AudioSource {
+  /** Stable caller-provided identity, also used for queue selection and persistence. */
   id: string;
   src: string;
   title?: string;
   artist?: string;
   artwork?: string;
   album?: string;
+  /** Duration in seconds, used until browser metadata is available. */
   durationHint?: number;
 }
 
@@ -147,8 +149,11 @@ export interface AudioPlayerPersistenceAdapter {
 
 export interface AudioPlayerPersistenceOptions {
   adapter: AudioPlayerPersistenceAdapter;
+  /** Restore on attachment without autoplay. Defaults to true. */
   autoRestore?: boolean;
+  /** Saved-state expiry in milliseconds. Defaults to 30 days. */
   maxAgeMs?: number;
+  /** Save interval while playing, in milliseconds. Defaults to 5000. */
   saveIntervalMs?: number;
 }
 
@@ -170,6 +175,7 @@ export interface AudioPlayerProgressSnapshot {
 }
 
 export interface AudioPlayerProgressReporterOptions {
+  /** Report interval while playing, in milliseconds. Defaults to 5000. Transitions also report. */
   intervalMs?: number;
   onReport: (snapshot: AudioPlayerProgressSnapshot) => void;
 }
@@ -195,12 +201,14 @@ export type AudioPlayerEventListener<K extends AudioPlayerEventName> = (
 
 export interface AudioPlayer {
   getState(): AudioPlayerState;
+  /** Calls the listener immediately, then on each state change. Returns an unsubscribe function. */
   subscribe(listener: (state: AudioPlayerState) => void): () => void;
   on<K extends AudioPlayerEventName>(
     eventName: K,
     listener: AudioPlayerEventListener<K>,
   ): () => void;
 
+  /** Requests a source without autoplay. Read status for metadata readiness and errors. */
   load(source: AudioSource): Promise<void>;
   play(source?: AudioSource): Promise<void>;
   pause(): void;
@@ -230,6 +238,7 @@ export interface AudioPlayer {
   previous(options?: PreviousOptions): Promise<void>;
   setRepeatMode(mode: RepeatMode): void;
 
+  /** Releases engine listeners and playback resources. Do not reuse the instance afterwards. */
   destroy(): void;
 }
 

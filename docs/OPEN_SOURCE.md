@@ -4,7 +4,7 @@ The library is public on npm and MIT licensed. Its scope, validation, and releas
 
 ## Where we are
 
-Checked against the repo and GitHub on the 1.1.0 line:
+Current foundation in the 1.2 release branch:
 
 Exists:
 
@@ -15,13 +15,13 @@ Exists:
 - README positioning and release gates are independent of any consuming app.
 - Importing and creating a player in Node works and does not throw. `load` on a server returns the typed `UNSUPPORTED_ENVIRONMENT` error. This is not documented yet.
 
-Gaps:
+Remaining adoption work and policies:
 
-- No supported browser or runtime matrix. `engines` says `node >=22`, which is a build requirement but reads as a consumer requirement for a browser library.
-- No stability or deprecation policy, so nobody can tell how safe `^1.x` is.
-- No code of conduct. GitHub Discussions are off, so there is no place for questions or use-case reports.
-- No bundle size check in CI, so size can drift unnoticed.
-- No guidance for Vue, Svelte, Solid, or server-rendered React (Next.js).
+- Keep the [support matrix](./SUPPORT.md) aligned with browser and React compatibility checks. Node and browser requirements are documented separately.
+- The [stability policy](./STABILITY.md) documents semver and deprecation expectations.
+- A code of conduct is in place. GitHub Discussions remain a proposed channel for questions and use-case reports.
+- CI checks bundle size, server imports/rendering, and browser behavior.
+- Server-rendered React is documented and tested with ReactDOMServer. Vue, Svelte, and Solid recipes remain future work.
 - One maintainer, and the npm package is owned by a personal account (no npm organization).
 - No external users yet (no stars, one open item). Everything below is readiness work, not a response to requests.
 

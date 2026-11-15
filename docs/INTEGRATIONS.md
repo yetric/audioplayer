@@ -1,3 +1,8 @@
+---
+id: integrations
+slug: /integrations
+---
+
 # Integrations
 
 ## Persistence
