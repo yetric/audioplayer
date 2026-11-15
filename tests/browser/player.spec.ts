@@ -83,7 +83,7 @@ test("chapter metadata drives images, text, links and navigation across seeks an
   const navigation = page.getByRole("navigation", { name: "Chapters" });
   await expect(cards).toContainText("Studio notes");
   await expect(cards.getByRole("img")).toHaveAttribute("alt", "Studio notes");
-  expect(await cards.getByRole("img").evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+  await expect.poll(() => cards.getByRole("img").evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   await expect(cards.getByRole("link", { name: "Read more" })).toHaveAttribute("href", "https://podcasting2.org/");
   await expect(navigation.getByRole("button")).toHaveCount(2);
   await page.locator("#play").click();

@@ -36,6 +36,7 @@ export const attachAudioPlayerCues = <T>(
   let leafCount = 1;
   let seeking = false;
   let destroyed = false;
+  let revision = 0;
   const subscribers = new Set<(snapshot: AudioPlayerCueSnapshot<T>) => void>();
   const events = {
     cueenter: new Set<(event: { cue: AudioPlayerCue<T> }) => void>(),
@@ -46,20 +47,30 @@ export const attachAudioPlayerCues = <T>(
     const previous = snapshot;
     if (previous.sourceId === sourceId && previous.activeCues.length === activeCues.length &&
       previous.activeCues.every((cue, index) => cue === activeCues[index])) return;
-    snapshot = { sourceId, activeCues };
+    const next = { sourceId, activeCues };
+    snapshot = next;
     const nextSet = new Set(activeCues);
     const previousSet = new Set(previous.activeCues);
     for (const cue of previous.activeCues) {
       if (previous.sourceId !== sourceId || !nextSet.has(cue)) {
-        for (const listener of events.cueexit) listener({ cue });
+        for (const listener of events.cueexit) {
+          if (snapshot !== next) return;
+          listener({ cue });
+        }
       }
     }
     for (const cue of activeCues) {
       if (previous.sourceId !== sourceId || !previousSet.has(cue)) {
-        for (const listener of events.cueenter) listener({ cue });
+        for (const listener of events.cueenter) {
+          if (snapshot !== next) return;
+          listener({ cue });
+        }
       }
     }
-    for (const listener of subscribers) listener(snapshot);
+    for (const listener of subscribers) {
+      if (snapshot !== next) return;
+      listener(next);
+    }
   };
 
   const readCues = (nextSource: AudioSource | null) => {
@@ -86,6 +97,7 @@ export const attachAudioPlayerCues = <T>(
 
   const sync = (state: AudioPlayerState, refresh = false) => {
     if (destroyed) return;
+    const currentRevision = ++revision;
     const reset = state.currentSource !== source ||
       (state.status === "loading" && previousStatus !== "loading");
     previousStatus = state.status;
@@ -94,6 +106,7 @@ export const attachAudioPlayerCues = <T>(
       if (reset) {
         seeking = false;
         publish(state.currentSourceId, []);
+        if (destroyed || revision !== currentRevision) return;
       }
     }
     if (seeking) return;

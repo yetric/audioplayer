@@ -1132,6 +1132,81 @@ describe("cue controller", () => {
     player.destroy();
   });
 
+  it.each([false, true])("enters once per queue load, reload, and repeat with deferred metadata: %s", async (deferred) => {
+    MockAudio.deferLoad = deferred;
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    controller.on("cueenter", entered);
+    await player.setQueue([episodeOne]);
+    expect(entered.mock.calls.map(([event]) => event.cue.id)).toEqual(["intro"]);
+    if (deferred) {
+      expect(player.getState().status).toBe("loading");
+      MockAudio.instances[0].dispatch("loadedmetadata");
+      expect(entered).toHaveBeenCalledTimes(1);
+      MockAudio.deferLoad = false;
+    }
+    await player.load(episodeOne);
+    expect(entered).toHaveBeenCalledTimes(2);
+    player.setRepeatMode("one");
+    MockAudio.instances[0].dispatch("ended");
+    await Promise.resolve();
+    expect(entered).toHaveBeenCalledTimes(3);
+    player.destroy();
+  });
+
+  it("stops a superseded publication when an exit listener unloads the player", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    const staleExit = vi.fn();
+    controller.on("cueexit", ({ cue }) => {
+      if (cue.id === "intro") player.unload();
+    });
+    controller.on("cueexit", ({ cue }) => {
+      if (cue.id === "intro") staleExit();
+    });
+    controller.on("cueenter", entered);
+    position(4);
+    expect(entered).not.toHaveBeenCalled();
+    expect(staleExit).not.toHaveBeenCalled();
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    player.destroy();
+  });
+
+  it.each(["destroy", "unload"])("does not restore content after %s in an exit listener during reset", async (action) => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const entered = vi.fn();
+    controller.on("cueenter", entered);
+    controller.on("cueexit", () => {
+      if (action === "destroy") controller.destroy();
+      else player.unload();
+    });
+    await player.load(episodeTwo);
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    expect(entered).not.toHaveBeenCalled();
+    player.destroy();
+  });
+
+  it.each(["destroy", "unload"])("stops remaining callbacks after %s in an enter listener", async (action) => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const controller = attachAudioPlayerCues(player, { getCues: () => ranges });
+    const staleEnter = vi.fn();
+    controller.on("cueenter", () => {
+      if (action === "destroy") controller.destroy();
+      else player.unload();
+    });
+    controller.on("cueenter", staleEnter);
+    position(1);
+    expect(staleEnter).not.toHaveBeenCalled();
+    expect(controller.getSnapshot()).toEqual({ sourceId: null, activeCues: [] });
+    player.destroy();
+  });
+
   it("finds active intervals in a large ordered transcript", async () => {
     const player = createAudioPlayer();
     await player.load(episodeOne);

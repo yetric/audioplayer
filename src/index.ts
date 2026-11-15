@@ -1147,10 +1147,10 @@ export const createAudioPlayer = (
           suppressPauseEvent = false;
         }
         engine.clearSource();
-        engine.load();
       }
 
       const nextState = updateCurrentSource(null, "idle");
+      if (engine.available) engine.load();
       emitQueueChange(nextState);
     },
 
@@ -1269,7 +1269,7 @@ export const createAudioPlayer = (
             playedFraction: 0,
             bufferedFraction: 0,
           },
-          status: startIndex >= 0 ? "ready" : "idle",
+          status: startIndex >= 0 ? "loading" : "idle",
           error: null,
           queue: {
             ...currentState.queue,
