@@ -23,7 +23,7 @@ It is built around one idea: make browser audio usable from vanilla JS, TypeScri
 - [Core API](./core-api.md)
 - [React](./react.md)
 - [Integrations](./integrations.md)
-- [podcast-app migration](./podcast-app-migration.md)
+- [Migrating an existing audio layer](./migration.md)
 
 ## Install
 

@@ -92,7 +92,7 @@ const config: Config = {
           items: [
             {
               label: 'Migration',
-              to: '/docs/podcast-app-migration',
+              to: '/docs/migration',
             },
             {
               label: 'GitHub',

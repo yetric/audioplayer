@@ -87,4 +87,4 @@ These are where bugs and surprises come from. Each needs tests before release.
 
 ## Demand check before building
 
-Hypothesis, not evidence: app developers want this. Before committing, build one visible demo in `podcast-app` (chapter art and a linked note appearing in step with the episode) and see if it holds up. Collect requests through Discussions (see [`OPEN_SOURCE.md`](./OPEN_SOURCE.md)).
+Hypothesis, not evidence: app developers want this. Before committing, build one visible demo in this repo (chapter art and a linked note appearing in step with the audio) and see if it holds up. Collect requests through Discussions (see [`OPEN_SOURCE.md`](./OPEN_SOURCE.md)).

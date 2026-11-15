@@ -1,12 +1,8 @@
-# podcast-app migration
+# Migrating an Existing React Audio Layer
 
 ## Replace the current provider
 
-Current source:
-
-- `src/context/audio.tsx`
-
-Recommended replacement:
+Replace your application-owned audio context or wrapper with:
 
 - `AudioPlayerProvider` from `@yetric/audioplayer/react`
 - app-level bootstrap for persistence, progress reporting, and Media Session

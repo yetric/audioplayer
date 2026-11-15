@@ -2,7 +2,7 @@
 
 Current focus:
 
-- prove the browser-first core in `podcast-app`
+- validate the browser-first core through repository tests, demos, and framework examples
 - keep the public API small
 - improve examples and external docs
 
@@ -22,4 +22,4 @@ Future work remains available for:
 
 - React Native feasibility
 - more production test coverage
-- external docs polish and deployment
+- external docs polish and consolidation
