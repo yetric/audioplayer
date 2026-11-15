@@ -1,6 +1,6 @@
 # Pre-1.0 Issue List
 
-Priority is based on one question only: does this unblock replacing the current `podcast-app` player?
+Historical planning checklist for the initial stable API. Priorities are reliable browser playback, a small framework-agnostic API, and reproducible tests and examples.
 
 ## P0
 
@@ -28,9 +28,9 @@ Priority is based on one question only: does this unblock replacing the current 
 ### Issue 002: Implement browser engine on top of `HTMLAudioElement`
 
 - Goal: reliable browser playback engine with state syncing and error handling.
-- `podcast-app` mapping:
-  - replaces current `AudioContext` wrapper
-  - supports current play, pause, seek, duration, rate flows
+- Example use case:
+  - replaces application-owned audio wrappers
+  - supports play, pause, seek, duration, and rate controls
 - Done when:
   - engine handles `loadedmetadata`, `timeupdate`, `play`, `pause`, `ended`, and `error`
   - state updates are consistent after imperative commands and native events
@@ -48,7 +48,7 @@ Priority is based on one question only: does this unblock replacing the current 
 ### Issue 004: Add queue, next/previous, and auto-advance
 
 - Goal: make podcast playlist playback a first-class feature.
-- `podcast-app` mapping:
+- Example use case:
   - playlist navigation
   - autoplay next episode on `ended`
 - Done when:
@@ -62,7 +62,7 @@ Priority is based on one question only: does this unblock replacing the current 
 ### Issue 005: Persistence and resume plugin
 
 - Goal: restore paused playback state across sessions.
-- `podcast-app` mapping:
+- Example use case:
   - restore last episode, time, rate, volume, queue index
 - Done when:
   - persistence is opt-in, not implicit
@@ -76,8 +76,8 @@ Priority is based on one question only: does this unblock replacing the current 
 ### Issue 006: Progress reporting hooks
 
 - Goal: support backend progress pings without coupling analytics to the core.
-- `podcast-app` mapping:
-  - current 5-second ping flow to backend
+- Example use case:
+  - periodic listening-progress reports to an application backend
 - Done when:
   - a consumer can attach a progress reporting controller
   - progress reports include source identity, current time, duration, played fraction, status, and queue position
@@ -105,7 +105,7 @@ Priority is based on one question only: does this unblock replacing the current 
   - successful operations clear stale error state
   - consumer can show useful UI from state alone
 
-### Issue 009: React adapter for `podcast-app`
+### Issue 009: React adapter
 
 - Goal: thin React integration proving the headless core is usable.
 - Scope:
@@ -114,17 +114,17 @@ Priority is based on one question only: does this unblock replacing the current 
   - `useAudioPlayerState` for subscribed state consumption
   - no React-owned playback engine
 - Done when:
-  - `podcast-app` can integrate with a small wrapper layer
+  - the React example integrates through the public provider and hooks
   - the React entrypoint is exported separately from the core package
   - React API does not diverge from the core mental model
 
-### Issue 010: Examples and migration guide for `podcast-app`
+### Issue 010: Examples and migration guide
 
 - Goal: reduce adoption friction.
 - Done when:
   - vanilla JS example exists
   - React example exists
-  - migration notes exist for replacing current `src/context/audio.tsx`
+  - migration notes explain how to replace an application-owned audio context
 
 ## P1
 
@@ -170,4 +170,4 @@ Priority is based on one question only: does this unblock replacing the current 
   - skip silence
   - advanced speed presets
   - share-position helpers
-- Note: useful, but not required for `1.0` unless `podcast-app` proves they are blocking
+- Note: useful, but not required for `1.0` unless a documented use case demonstrates they are blocking

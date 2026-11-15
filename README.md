@@ -6,12 +6,12 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.1.0` is the current stable release.
+`1.1.1` is the current stable release.
 
 Recommended current focus:
 
 - use the browser package
-- validate it in `podcast-app`
+- validate playback through this repo's tests, demos, and framework examples
 - treat React Native support as later work
 
 ## Install
@@ -45,7 +45,7 @@ player.subscribe((state) => {
 });
 ```
 
-The first milestone is not "generic media player." It is "good enough to replace the current `podcast-app` audio layer with a simpler, testable, framework-agnostic library."
+Use it to build audio interfaces for podcasts, audiobooks, music, and other browser audio. The library owns playback state and commands; your app owns the UI, content, and network requests.
 
 ## Product Direction
 
@@ -63,9 +63,9 @@ The first milestone is not "generic media player." It is "good enough to replace
 - Strong TypeScript types without making vanilla JS usage awkward
 - React Native compatibility treated as a later adapter problem, not a 1.0 blocker
 
-## 1.0 Goal
+## Core capabilities
 
-`1.0.0` is ready when `podcast-app` can use this package for:
+The stable browser API supports:
 
 - load / replace a source
 - play / pause
@@ -132,7 +132,7 @@ The public API should stay small. Extra behavior like persistence, progress ping
 - [`docs/REACT_GUIDE.md`](./docs/REACT_GUIDE.md)
 - [`docs/INTEGRATIONS.md`](./docs/INTEGRATIONS.md)
 - [`docs/RECIPES.md`](./docs/RECIPES.md)
-- [`docs/MIGRATION_PODCAST_APP.md`](./docs/MIGRATION_PODCAST_APP.md)
+- [`docs/MIGRATION.md`](./docs/MIGRATION.md)
 - [`docs/ANGULAR_EXAMPLE.md`](./docs/ANGULAR_EXAMPLE.md)
 - [`docs/WEB_COMPONENT_EXAMPLE.md`](./docs/WEB_COMPONENT_EXAMPLE.md)
 

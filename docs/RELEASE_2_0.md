@@ -10,7 +10,7 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 
 - Every 1.x limitation we document today is a candidate: one active player per page, a flat single-source `AudioSource`, browser-only engine.
 - The internal engine boundary (`AudioEngine`) already exists. 2.0 would make it a public, versioned contract.
-- Decisions here should be driven by real consumers. If `podcast-app` and at least one other consumer do not need an item, drop it.
+- Decisions need documented use cases and reproducible examples. External feedback helps assess demand; no specific application is required to adopt an item.
 
 ## Candidate themes
 
@@ -31,7 +31,7 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 
 - HLS and DASH through an engine, for example one built on hls.js.
 - Chromecast and AirPlay through engines or plugins.
-- Open question: is this in scope for a podcast-first library, or a different package?
+- Open question: is this in scope for a headless browser audio library, or a different package?
 
 ### 4. Sync and listening history
 

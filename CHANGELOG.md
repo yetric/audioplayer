@@ -11,6 +11,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - `AudioPlayerProvider` accepts `persistence` (with `onRestore`), `mediaSession` and `progressReporter` options and attaches and detaches them itself
 - `useAudioPlayerState(selector, isEqual?)` re-renders only when the selected value changes
 
+## 1.1.1 - 2026-11-15
+
+- Updates React, React DOM, jsdom, tsup, and TypeScript development dependencies
+- Generates declarations with TypeScript 7 while preserving the package entry points
+- Refreshes the workspace lockfile and overrides vulnerable docs-tooling dependencies
+- Adds docs typechecking to CI
+- Known limitation: the docs SVG tooling still depends on deepmerge 4.3.1, which has a low-severity advisory and no patched release
+
 ## 1.1.0 - 2026-10-11
 
 - Fixes `AudioPlayerProvider` destroying a provider-created player under React StrictMode, which left the player unusable in development

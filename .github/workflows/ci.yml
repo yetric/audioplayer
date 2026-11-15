@@ -19,9 +19,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            website/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install root dependencies
         run: npm ci
@@ -34,6 +32,9 @@ jobs:
 
       - name: Build package
         run: npm run build
+
+      - name: Typecheck docs
+        run: npm run typecheck --workspace website
 
       - name: Build docs
         run: npm run docs:build

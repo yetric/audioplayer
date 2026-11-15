@@ -12,7 +12,7 @@ The timeline events are the headline. The design is in [`DESIGN_CUES.md`](./DESI
 
 Repo evidence:
 
-- `V1_ISSUES.md` Issue 015 lists sleep timer, skip silence, advanced speed presets and share-position helpers as candidates, deferred until `podcast-app` shows a need.
+- `V1_ISSUES.md` Issue 015 lists sleep timer, skip silence, advanced speed presets and share-position helpers as candidates, deferred until a documented use case justifies them.
 - The persistence plugin stores one session (the last item and position). It does not remember positions for other episodes.
 
 Hypotheses to validate before building (none of these are confirmed demand):
@@ -21,7 +21,7 @@ Hypotheses to validate before building (none of these are confirmed demand):
 - Chapters are worth showing when a feed provides them.
 - A sleep timer is a common request for evening listening.
 
-Validate each with `podcast-app` usage data or listener feedback before committing.
+Validate each with a focused demo and user feedback before committing.
 
 ## Scope
 
@@ -51,12 +51,12 @@ Other users (see [`OPEN_SOURCE.md`](./OPEN_SOURCE.md)): shuffle and A-B loop are
 
 ## Success measures
 
-- `podcast-app` ships at least two of the P0 and P1 features using the library API, with no feature-specific playback code of its own.
+- The hosted demo demonstrates at least two of the P0 and P1 features through the public library API, with automated coverage for their behavior.
 - Public API additions stay under the size of one attach function each.
 
 ## Risks
 
-- Feature creep against the rule "keep the public API small". Each feature must justify itself with a `podcast-app` need and ship as an opt-in attach function or an optional field.
+- Feature creep against the rule "keep the public API small". Each feature must justify itself with a documented use case and ship as an opt-in attach function or an optional field.
 - A positions store can grow without bound. It needs a cap and expiry from day one.
 
 ## Open questions
@@ -70,4 +70,4 @@ This release is large. If it runs long, ship cues, chapters and lifecycle events
 
 ## Release gate
 
-Publish `1.3.0-beta.1`. Build a visible demo in `podcast-app` (chapter art and linked notes appearing in step with the audio), drop any feature that has no named consumer, then promote.
+Publish `1.3.0-beta.1`. Verify chapter art and linked notes synchronized with audio in this repo's hosted demo, pass the automated checks, and defer features without a demonstrated use case before promoting.

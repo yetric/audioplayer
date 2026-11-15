@@ -1,16 +1,12 @@
-# podcast-app Migration
+# Migrating an Existing React Audio Layer
 
 ## Goal
 
-Replace the current React-only audio context in `podcast-app` with `@yetric/audioplayer` core plus the React adapter.
-
-Current source to replace:
-
-- `/home/hising/src/github/yetric/podcast-app/src/context/audio.tsx`
+Replace an application-owned audio context or wrapper with `@yetric/audioplayer` core plus the React adapter. The method names below illustrate a typical existing wrapper; adapt them to your application.
 
 ## Mapping
 
-### Current `podcast-app` usage
+### Example existing wrapper
 
 - `setAudio(src)`
 - `play()`
@@ -28,7 +24,7 @@ Current source to replace:
 - `player.seek(time)`
 - `useAudioPlayerState().duration`
 - `player.setRate(rate)`
-- `player.destroy()` or explicit source replacement
+- `player.unload()` to clear a source; `player.destroy()` when disposing the player
 
 ## Recommended integration
 
@@ -68,7 +64,7 @@ const PlayerBootstrap = () => {
 
   useEffect(() => {
     const persistence = attachAudioPlayerPersistence(player, {
-      adapter: createLocalStoragePersistenceAdapter("podcast-app-player"),
+      adapter: createLocalStoragePersistenceAdapter("audio-player"),
     });
 
     const reporter = attachAudioPlayerProgressReporter(player, {
@@ -78,7 +74,7 @@ const PlayerBootstrap = () => {
           return;
         }
 
-        // Replace with existing userStore ping behavior.
+        // Send the snapshot through your application's reporting API.
         console.log(snapshot.sourceId, snapshot.currentTime);
       },
     });

@@ -2,14 +2,14 @@
 
 ## Target
 
-Ship `1.0.0` only when the library can replace the current `podcast-app` audio context with a cleaner headless API and no meaningful feature regression in core listening flows.
+Maintain a standalone, headless browser audio library with a small public API, reliable playback, and tested examples that applications can adopt independently.
 
 ## Principles
 
 1. Core before adapters.
 2. Browser support before React Native.
 3. State machine and events before UI helpers.
-4. Podcast use cases before generic streaming edge cases.
+4. Common listening flows before specialized streaming features.
 5. Progressive enhancement for Media Session and persistence.
 
 ## Architecture Direction
@@ -69,7 +69,7 @@ Ship `1.0.0` only when the library can replace the current `podcast-app` audio c
 
 ## Release Plan After 1.0
 
-Every 1.x release is additive and ships a prerelease first. Each is validated in `podcast-app` where the work applies to it. Platform-specific work (for example Angular or Web Components) is validated with its example project or another named consumer. Items with no named consumer get dropped. 2.0 is the only release that may break.
+Every 1.x release is additive and ships a prerelease first. Validate changes with this repo's automated tests, browser demo, and relevant framework examples. External app feedback informs priorities but is not a release requirement. Defer features without a clear use case and a reproducible example. 2.0 is the only release that may break.
 
 | Release | Theme | Details |
 | ------- | ----- | ------- |
@@ -82,7 +82,7 @@ Every 1.x release is additive and ships a prerelease first. Each is validated in
 Rules:
 
 - No breaking changes in 1.x. Collect them in `RELEASE_2_0.md`.
-- Every feature needs a named consumer need. Hypotheses are marked as such in the release docs.
+- Every feature needs a documented use case and acceptance criteria. Hypotheses are marked as such in the release docs.
 - Keep the public API small. Prefer opt-in attach functions and optional fields.
 - 2.0 has a documentation, LLM support and demo quality bar, with groundwork in each 1.x release. See [`DOCS_PLAN.md`](./DOCS_PLAN.md).
 - The library is open source. Community and adoption work is tracked in [`OPEN_SOURCE.md`](./OPEN_SOURCE.md) and scheduled into these releases.
