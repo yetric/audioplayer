@@ -10,6 +10,8 @@ Headless TypeScript audio player for modern browsers.
 
 `1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 
+In development on `1.3.0`: [timed multimedia metadata](./docs/TIMED_METADATA.md) for synchronized images, links, and text, with a Podcasting 2.0 JSON Chapters adapter and React hook. Applications supply data and rendering; the library manages active cues. Run `npm run demo:start` to try it. This work is not included in the published 1.2 package.
+
 Use it for browser audio apps that need playback and queue state without a prescribed UI. The core works with vanilla JS and any framework; React integration is included on a separate export. React Native playback is not shipped.
 
 [Support matrix](./docs/SUPPORT.md) | [Stability policy](./docs/STABILITY.md) | [Server rendering](./docs/SERVER_RENDERING.md)

@@ -3,8 +3,9 @@ import { createRequire } from "node:module";
 import { test } from "node:test";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { createAudioPlayer, createLocalStoragePersistenceAdapter } from "@yetric/audioplayer";
-import { AudioPlayerProvider, useAudioPlayerProgress, useAudioPlayerState } from "@yetric/audioplayer/react";
+import * as esm from "@yetric/audioplayer";
+import { createAudioPlayer, createLocalStoragePersistenceAdapter, attachAudioPlayerCues } from "@yetric/audioplayer";
+import { AudioPlayerProvider, useAudioPlayerProgress, useAudioPlayerState, useAudioPlayerCues } from "@yetric/audioplayer/react";
 
 test("ESM and CommonJS exports load without browser globals", async () => {
   assert.equal(typeof globalThis.Audio, "undefined");
@@ -20,11 +21,27 @@ test("ESM and CommonJS exports load without browser globals", async () => {
 });
 
 test("React provider and hooks render on a server without browser storage", () => {
+  const player = createAudioPlayer();
+  const cues = attachAudioPlayerCues(player, { getCues: () => [] });
   const Screen = () => createElement("p", null,
-    `${useAudioPlayerState((state) => state.status)}:${useAudioPlayerProgress().currentTime}`);
+    `${useAudioPlayerState((state) => state.status)}:${useAudioPlayerProgress().currentTime}:${useAudioPlayerCues(cues).activeCues.length}`);
   const html = renderToString(createElement(AudioPlayerProvider, {
     persistence: { adapter: createLocalStoragePersistenceAdapter("ssr-test") },
     mediaSession: true,
   }, createElement(Screen)));
-  assert.equal(html, "<p>idle:0</p>");
+  assert.equal(html, "<p>idle:0:0</p>");
+  player.destroy();
+});
+
+test("chapter conversion and cue controllers load from ESM and CommonJS", () => {
+  const require = createRequire(import.meta.url);
+  for (const api of [esm, require("@yetric/audioplayer")]) {
+    const chapters = api.createPodcastChapterCues({ version: "1.2.0", chapters: [{ startTime: 0 }] }, { sourceId: "episode" });
+    assert.equal(chapters[0].id, "episode:chapter:0");
+    const player = api.createAudioPlayer();
+    const controller = api.attachAudioPlayerCues(player, { getCues: () => chapters });
+    assert.deepEqual(controller.getSnapshot(), { sourceId: null, activeCues: [] });
+    player.destroy();
+    assert.equal(typeof require("@yetric/audioplayer/react").useAudioPlayerCues, "function");
+  }
 });

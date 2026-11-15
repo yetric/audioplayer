@@ -75,3 +75,29 @@ test("browser demo plays and navigates its queue", async ({ page }) => {
   await page.locator("#next").click();
   await expect.poll(async () => JSON.parse(await page.locator("#state").innerText()).currentSourceId).toBe("episode-2");
 });
+
+test("chapter metadata drives images, text, links and navigation across seeks and sources", async ({ page }) => {
+  await page.goto("/demo/");
+  await page.locator("#load-first").click();
+  const cards = page.locator("#cards");
+  const navigation = page.getByRole("navigation", { name: "Chapters" });
+  await expect(cards).toContainText("Studio notes");
+  await expect(cards.getByRole("img")).toHaveAttribute("alt", "Studio notes");
+  expect(await cards.getByRole("img").evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+  await expect(cards.getByRole("link", { name: "Read more" })).toHaveAttribute("href", "https://podcasting2.org/");
+  await expect(navigation.getByRole("button")).toHaveCount(2);
+  await page.locator("#play").click();
+  await expect(cards).toContainText("Inside the recording");
+  await page.locator("#pause").click();
+  await expect(cards.getByRole("img")).toHaveAttribute("alt", "Inside the recording");
+  await expect(navigation.getByRole("button", { name: "Inside the recording" })).toHaveCount(0);
+  await navigation.getByRole("button", { name: "Further listening" }).click();
+  await expect(cards).toHaveText("Further listeningRead more");
+  await expect(cards.getByRole("img")).toHaveCount(0);
+  await navigation.getByRole("button", { name: "Studio notes" }).click();
+  await expect(cards).toContainText("Studio notes");
+  await page.locator("#load-queue").click();
+  await page.locator("#next").click();
+  await expect(cards).toBeEmpty();
+  await expect(navigation).toBeHidden();
+});

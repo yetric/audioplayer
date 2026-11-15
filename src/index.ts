@@ -1860,3 +1860,13 @@ export const attachAudioPlayerMediaSession = (
     },
   };
 };
+
+export { attachAudioPlayerCues } from "./cues.js";
+export type {
+  AudioPlayerCue,
+  AudioPlayerCueSnapshot,
+  AudioPlayerCuesOptions,
+  AudioPlayerCuesController,
+} from "./cues.js";
+export { createPodcastChapterCues } from "./chapters.js";
+export type { PodcastChapter, PodcastChapterCuesOptions } from "./chapters.js";

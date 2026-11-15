@@ -17,6 +17,22 @@ Maintain a standalone, headless browser audio library with a small public API, r
 4. Common listening flows before specialized streaming features.
 5. Progressive enhancement for Media Session and persistence.
 
+## Next focus: timed multimedia metadata
+
+1.2 is shipped. The next milestone is an opt-in synchronization layer for consumer-supplied images, links, text, and other timed data. The library stays headless: applications own metadata production, fetching, and presentation.
+
+First deliverable for 1.3:
+
+- Typed range cues and an observable set of active cues.
+- An opt-in adapter for Podcasting 2.0 JSON Chapters, including timed images, titles, links, and hidden metadata markers. Document how parsed timed transcripts use the same cues.
+- Correct active state after seeking, scrubbing, playback-rate changes, loops, and source changes.
+- A React hook for active cues, backed by the same controller used by vanilla JS.
+- A runnable multimedia demo with images, links, and text, plus unit and browser tests.
+
+All timestamps use the original media timeline. Playback instructions such as silence skip ranges remain separate from presentation cues. A future skip controller must synchronize presentation at its destination without replaying content it skipped.
+
+Use Podcasting 2.0 formats at the boundary while keeping the core generic. Applications own RSS discovery and fetching. Dedicated chapter helpers can build on the first adapter and demo. Sleep timers, listening history, and other convenience features do not block the multimedia milestone. Details: [`RELEASE_1_3.md`](./RELEASE_1_3.md) and [`DESIGN_CUES.md`](./DESIGN_CUES.md).
+
 ## Architecture Direction
 
 ### Core
@@ -79,8 +95,8 @@ Every 1.x release is additive and ships a prerelease first. Validate changes wit
 | Release | Theme | Details |
 | ------- | ----- | ------- |
 | 1.1 | Quality and publishing | Shipped. StrictMode fix, more tests, OIDC publishing |
-| 1.2 | Less glue code | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
-| 1.3 | Timeline events and listening features | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
+| 1.2 | Less glue code, shipped | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
+| 1.3 | Timed multimedia metadata, next focus | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
 | 1.4 | Resilience and reach | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
 | 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md), [`DOCS_PLAN.md`](./DOCS_PLAN.md) |
 

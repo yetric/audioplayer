@@ -18,6 +18,8 @@ import {
   type AudioPlayerProgressReporterOptions,
   type AudioPlayerState,
   type AudioPlayerProgressState,
+  type AudioPlayerCuesController,
+  type AudioPlayerCueSnapshot,
   type CreateAudioPlayerOptions,
   type PersistedPlayerState,
 } from "./index.js";
@@ -246,4 +248,10 @@ export function useAudioPlayerProgress({
   }, [player, intervalMs]);
 
   return progress;
+}
+
+export function useAudioPlayerCues<T>(
+  controller: AudioPlayerCuesController<T>,
+): AudioPlayerCueSnapshot<T> {
+  return useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
 }

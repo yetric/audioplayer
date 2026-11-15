@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
     },
     'react',
     'integrations',
+    'timed-metadata',
     'recipes',
     'migration',
     'support',

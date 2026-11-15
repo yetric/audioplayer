@@ -4,11 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createAudioPlayer,
+  attachAudioPlayerCues,
   type AudioPlayer,
   type AudioPlayerState,
   type PersistedPlayerState,
 } from "./index";
-import { AudioPlayerProvider, useAudioPlayer, useAudioPlayerState, useAudioPlayerProgress } from "./react";
+import { AudioPlayerProvider, useAudioPlayer, useAudioPlayerState, useAudioPlayerProgress, useAudioPlayerCues } from "./react";
 
 class FakeAudio {
   static instances: FakeAudio[] = [];
@@ -372,6 +373,39 @@ describe("react adapter", () => {
       const Progress = () => { useAudioPlayerProgress({ intervalMs: 0 }); return null; };
       expect(() => render(<AudioPlayerProvider><Progress /></AudioPlayerProvider>)).toThrow(RangeError);
     });
+  });
+
+  it("subscribes to externally owned cues under StrictMode without rendering on every tick", async () => {
+    const player = createAudioPlayer();
+    await player.load(episode);
+    const controller = attachAudioPlayerCues(player, { getCues: () => [
+      { id: "intro", start: 0, end: 2, data: "Intro" },
+      { id: "end", start: 2, data: "End" },
+    ] });
+    let renders = 0;
+    const Cards = () => {
+      renders++;
+      return <p>{useAudioPlayerCues(controller).activeCues.map((cue) => cue.data).join(",")}</p>;
+    };
+    render(<StrictMode><Cards /></StrictMode>);
+    expect(container.textContent).toBe("Intro");
+    const initialRenders = renders;
+    act(() => {
+      FakeAudio.instances[0].currentTime = 1;
+      FakeAudio.instances[0].dispatch("timeupdate");
+    });
+    expect(renders).toBe(initialRenders);
+    act(() => {
+      FakeAudio.instances[0].currentTime = 2;
+      FakeAudio.instances[0].dispatch("seeked");
+    });
+    expect(container.textContent).toBe("End");
+    const destroy = vi.spyOn(controller, "destroy");
+    act(() => root.unmount());
+    expect(destroy).not.toHaveBeenCalled();
+    root = createRoot(container);
+    controller.destroy();
+    player.destroy();
   });
 
   describe("provider plugins", () => {
