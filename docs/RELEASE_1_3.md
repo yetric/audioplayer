@@ -1,6 +1,6 @@
 # 1.3: Timed Multimedia Metadata
 
-Status: first milestone prepared as `1.3.0-beta.1`. Additive only, no breaking changes. Stable npm installs remain on 1.2.0; install `@yetric/audioplayer@beta` to evaluate timed metadata before promotion.
+Status: first milestone promoted to stable `1.3.0`, following `1.3.0-beta.1`. Additive only, no breaking changes. Install with `npm install @yetric/audioplayer`.
 
 Implemented API and demo instructions: [Timed metadata](./TIMED_METADATA.md).
 
@@ -68,4 +68,4 @@ Deferred features need their own use case and scheduling decision; they do not a
 
 ## Release gate
 
-Publish `1.3.0-beta.1` after the milestone passes unit, browser, package, type, size, and docs checks. Validate the multimedia demo and examples before promoting. External app adoption and silence skipping are not release gates.
+Stable promotion requires passing unit, browser, package, type, size, and docs checks, plus validation of the multimedia demo and examples. The release includes The Last Signal, a fictional storytelling demo built on the existing cue API. Its application-specific reveal rules are not a new public library contract. External app adoption and silence skipping are not release gates.

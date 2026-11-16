@@ -8,6 +8,18 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 - No unreleased changes yet
 
+## 1.3.0 - 2026-11-16
+
+- Prevents late play-promise rejections from overwriting newer pause, source, or playback intent with a stale error
+- Promotes timed metadata to stable: `attachAudioPlayerCues`, `createPodcastChapterCues`, and the React `useAudioPlayerCues` hook
+- Supports typed overlapping cues, stable snapshots, enter/exit events, metadata refresh, and automatic cleanup
+- Converts parsed Podcasting 2.0 JSON Chapters 1.2.0, preserving hidden markers and inferred or open-ended ranges
+- Keeps cues synchronized across seeks, rate changes, repeat, queue transitions, unload, and source changes
+- Adds The Last Signal, a two-part fictional storytelling demo with local narration, contextual material, deferred questions, and playback-preserving exploration
+- Includes original demo assets, standard chapter fixtures, reproducible audio generation, and documentation of passage-level reveal rules
+- Adds browser coverage for storytelling navigation, detours, answer availability, mobile layout, and failure recovery
+- Preserves the existing public playback API; silence skipping and remote playback destinations remain separate follow-ups
+
 ## 1.3.0-beta.1 - 2026-11-15
 
 - Adds opt-in timed metadata with `attachAudioPlayerCues`, typed overlapping ranges, stable active snapshots, enter/exit events, metadata refresh, and automatic cleanup
