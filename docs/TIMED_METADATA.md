@@ -73,6 +73,47 @@ An explicit `endTime` wins. Otherwise a cue ends at the next strictly later mark
 
 `toc: false` excludes a marker from chapter navigation but retains its timed content. It does not mark audio silence. Optional titles must have application-provided fallback labels; applications also provide image alt text and URL safety policies. The adapter does not render content or inherit missing fields from earlier chapters.
 
+## Chapter navigation (unreleased 1.4)
+
+`attachAudioPlayerChapters(player, options)` adds navigation on top of the existing cue controller. It is not in stable 1.3.1. Supply the same revision-matched PodcastChapter cues returned by `createPodcastChapterCues`:
+
+```ts
+import { attachAudioPlayerChapters } from "@yetric/audioplayer";
+
+const chapters = attachAudioPlayerChapters(player, {
+  getCues: (source) => chapterMetadata.get(source.id) ?? [],
+  restartThresholdSeconds: 5,
+});
+const offCards = chapters.cues.subscribe(renderCards);
+const offNavigation = chapters.subscribe(({ entries, current, next, previous }) => {
+  renderChapterControls(entries, current, next, previous);
+});
+nextButton.onclick = () => { chapters.next(); };
+previousButton.onclick = () => { chapters.previous(); };
+// Individual chapter buttons call chapters.seekTo(cue.id).
+
+// After replacing metadata:
+chapters.refresh();
+// Teardown:
+offCards();
+offNavigation();
+chapters.destroy();
+```
+
+The controller owns `chapters.cues`; destroying either the chapter controller or player releases that cue controller. Reuse it for presentation, including `useAudioPlayerCues(chapters.cues)` in React. Do not attach a second cue engine for the same chapter presentation. The chapter snapshot is stable between navigation changes and can be consumed with `useSyncExternalStore(chapters.subscribe, chapters.getSnapshot, chapters.getSnapshot)`; unsubscribe on component cleanup, leaving controller ownership with the application.
+
+`getSnapshot()` returns `{ sourceId, entries, current, next, previous }` with immediate subscriptions. The navigation rules are:
+
+- `entries` excludes `toc: false`. Equal start times use the first visible entry in input order; other markers still participate in timed presentation.
+- The current navigation chapter is the latest visible start at or before the observed position. An explicit `data.endTime` ends it; otherwise it lasts until the next visible chapter, bounded by media end. Hidden presentation markers therefore do not end a navigation chapter. Explicit ends can leave gaps with `current: null`. A known duration and `ended` status bound the final chapter.
+- `next` is the first strictly later visible start. It is null at the final chapter/media end. `next()` never advances the queue or starts playback.
+- While within the restart threshold (including exactly the threshold), `previous` targets the earlier visible chapter. Beyond it, it targets the current chapter's start. In a gap or at media end it targets the latest visible start. With no earlier target it is null; `previous()` is a no-op.
+- The threshold defaults to five seconds and must be finite and non-negative. A zero threshold selects the earlier entry at the exact start and restarts after any progress.
+- `next()`, `previous()` and `seekTo(id)` return whether a seek was requested, not a receiver acknowledgment. Missing, hidden and discarded same-time IDs return false. They use `player.seek()` and never call play/pause; existing seek clamping, errors, and completed-seek cue semantics apply.
+- Source replacement, reload, refresh, unload and destruction update or clear navigation. Refresh validation failure retains the previous snapshot. No independent clock is added.
+
+The demo's Previous chapter and Next chapter controls use this API and leave queue navigation on the existing Previous/Next buttons.
+
 ## Timed transcripts
 
 [`podcast:transcript`](https://podcasting2.org/docs/podcast-namespace/tags/transcript) can identify timed or untimed documents. Parse the chosen format in your application and map timed entries to the same generic cues. For example, already parsed WebVTT entries with numeric start and end seconds:

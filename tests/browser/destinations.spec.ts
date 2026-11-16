@@ -1,7 +1,13 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import type { AudioPlayer } from "../../src/index";
 
 declare global { interface Window { player: AudioPlayer; } }
+
+const playbackSnapshot = async (page: Page) => {
+  const state = JSON.parse(await page.locator("#state").innerText());
+  delete state.media.readyState;
+  return state;
+};
 
 test("native routing retains the paused timeline and queue", async ({ page }) => {
   await page.addInitScript(() => {
@@ -21,7 +27,10 @@ test("native routing retains the paused timeline and queue", async ({ page }) =>
   await expect.poll(() => page.evaluate(() => window.player.getState().status)).toBe("ready");
   const result = await page.evaluate(async () => {
     const player = window.player;
-    player.seek(5);
+    await new Promise<void>((resolve) => {
+      const off = player.on("seeked", () => { off(); resolve(); });
+      player.seek(5);
+    });
     const before = player.getState();
     const destinations = player.destinations();
     const sink = await destinations.setOutput("speaker");
@@ -86,7 +95,7 @@ test.describe("demo output controls", () => {
   });
 
   test("keyboard selection shows pending, removed output and explicit default recovery", async ({ page }) => {
-    const before = await page.locator("#state").innerText();
+    const before = await playbackSnapshot(page);
     await expect(page.locator("#destination-state")).toContainText("availability unknown");
     const output = page.getByRole("button", { name: "Choose audio output", exact: true });
     await output.focus();
@@ -104,17 +113,17 @@ test.describe("demo output controls", () => {
     expect(await page.evaluate(() => window.routeTest.sinkCalls)).toEqual(["speaker"]);
     await page.getByRole("button", { name: "Use system default output", exact: true }).click();
     expect(await page.evaluate(() => window.routeTest.sinkCalls)).toEqual(["speaker", ""]);
-    await expect(page.locator("#state")).toHaveText(before);
+    expect(await playbackSnapshot(page)).toEqual(before);
     await expect(page.locator("#cards")).toContainText("Studio notes");
   });
 
   test("remote failure preserves playback and retry observes connect and disconnect", async ({ page }) => {
-    const before = await page.locator("#state").innerText();
+    const before = await playbackSnapshot(page);
     await page.evaluate(() => { window.routeTest.failRemote = true; });
     const remote = page.getByRole("button", { name: "Choose remote output", exact: true });
     await remote.click();
     await expect(page.locator("#destination-result")).toContainText("NotAllowedError");
-    await expect(page.locator("#state")).toHaveText(before);
+    expect(await playbackSnapshot(page)).toEqual(before);
     await page.evaluate(() => { window.routeTest.failRemote = false; });
     await remote.click();
     await expect(page.locator("#destination-state")).toContainText("Remote output: connected");
@@ -123,7 +132,7 @@ test.describe("demo output controls", () => {
     await remote.click();
     await expect(page.locator("#destination-state")).toContainText("Remote output: disconnected");
     await expect(page.locator("#rate")).toBeEnabled();
-    await expect(page.locator("#state")).toHaveText(before);
+    expect(await playbackSnapshot(page)).toEqual(before);
   });
 
   test("reloading the episode during a picker suppresses the stale sink choice", async ({ page }) => {

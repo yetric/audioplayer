@@ -8,7 +8,7 @@ Headless TypeScript audio player for modern browsers.
 
 `1.3.1` is the current stable release.
 
-The unreleased [1.4 native destination prototype](./docs/DESTINATIONS.md) adds headless output controls. Hardware support is unverified.
+The unreleased 1.4 work adds [native output controls](./docs/DESTINATIONS.md), [chapter navigation](./docs/TIMED_METADATA.md#chapter-navigation-unreleased-14), and [readiness/buffering state](./docs/CORE_GUIDE.md#media-readiness-unreleased-14). A separate [Cast handoff experiment](./docs/CAST_PROTOTYPE.md) is available for development testing. Hardware support remains unverified; no feature release is published.
 
 `1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 

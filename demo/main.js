@@ -2,7 +2,7 @@ import {
   attachAudioPlayerMediaSession,
   attachAudioPlayerPersistence,
   attachAudioPlayerProgressReporter,
-  attachAudioPlayerCues,
+  attachAudioPlayerChapters,
   createPodcastChapterCues,
   createAudioPlayer,
   createLocalStoragePersistenceAdapter,
@@ -45,9 +45,10 @@ attachAudioPlayerProgressReporter(player, {
 attachAudioPlayerMediaSession(player);
 
 const chapterCues = createPodcastChapterCues(chapterDocument, { sourceId: queue[0].id });
-const cues = attachAudioPlayerCues(player, {
+const chapterNavigation = attachAudioPlayerChapters(player, {
   getCues: (source) => source.id === queue[0].id ? chapterCues : [],
 });
+const cues = chapterNavigation.cues;
 const cardsEl = document.querySelector("#cards");
 const chaptersEl = document.querySelector("#chapters");
 const chapterImages = {
@@ -57,7 +58,7 @@ const chapterImages = {
 for (const cue of chapterCues.filter(({ data }) => data.toc !== false)) {
   const button = document.createElement("button");
   button.textContent = cue.data.title ?? `Chapter at ${cue.start}s`;
-  button.onclick = () => player.seek(cue.start);
+  button.onclick = () => chapterNavigation.seekTo(cue.id);
   chaptersEl.append(button);
 }
 cues.subscribe(({ activeCues, sourceId }) => {
@@ -174,4 +175,18 @@ outputButton.onclick = () => { void destinations.selectOutput().then(showDestina
 defaultButton.onclick = () => { void destinations.setOutput("").then(showDestinationResult); };
 window.addEventListener("pagehide", (event) => {
   if (!event.persisted) player.destroy();
+});
+
+const previousChapter = document.querySelector("#previous-chapter");
+const nextChapter = document.querySelector("#next-chapter");
+chapterNavigation.subscribe(({ current, previous, next }) => {
+  previousChapter.disabled = previous === null;
+  nextChapter.disabled = next === null;
+  document.querySelector("#current-chapter").textContent = current?.data.title ?? "No current chapter";
+});
+previousChapter.onclick = () => chapterNavigation.previous();
+nextChapter.onclick = () => chapterNavigation.next();
+player.subscribe(({ media }) => {
+  document.querySelector("#media-state").textContent = media.seeking ? "Seeking..."
+    : media.buffering ? "Waiting for audio..." : `Media readyState: ${media.readyState ?? "unknown"}`;
 });

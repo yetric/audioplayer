@@ -1,8 +1,12 @@
 # Destination hardware validation
 
-Status on 2026-11-16: not run. No physical AirPlay receiver or audio-output device is available in the current environment, as confirmed by the user. Native controls remain experimental. Automated browser tests and CI are separate evidence and do not complete this gate.
+Status on 2026-11-16: not run. The user has since identified Android and a Chromecast/Google TV for manual testing. No physical device result has been recorded, and the agent environment cannot operate those receivers. Native controls remain experimental. Automated browser tests and CI are separate evidence and do not complete this gate.
 
 Use `npm run demo:start` and the demo's public output controls. For receiver testing, serve the demo and media over device-accessible HTTPS. Use a public media URL reachable by the receiver, not a sender-local blob, cookie-only origin or receiver-inaccessible localhost. The checked-in WAV is a local browser test fixture, not evidence of remote codec support.
+
+For native AirPlay on iPhone Safari, run `npm run demo:start -- --host 0.0.0.0 --port 5173`, open the computer's LAN address on the phone, and try the remote picker or system AirPlay controls. Plain HTTP can inspect local playback but is not evidence for secure-context APIs; use trusted HTTPS for full API validation. A phone's `localhost` refers to the phone, not the computer.
+
+For Android/Chromecast, use the separate [Cast experiment and HTTPS recipe](./CAST_PROTOTYPE.md). The normal demo does not contain a Google Cast adapter. Google excludes iOS Chrome from its Web Sender SDK; do not treat iPhone AirPlay results as Cast results.
 
 Record exact date, browser version/build, OS/device version, receiver model/firmware, source URL/content type/access requirements, system output, permission policy and whether the tab is foreground/background. Record source identity, queue index, playback intent, position before/after, active chapter and observed connection state. Capture the observed audible route separately from API success. Redact credentials and ephemeral grant URLs.
 

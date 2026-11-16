@@ -265,6 +265,70 @@ describe("createAudioPlayer", () => {
     },
   );
 
+  it("observes readyState separately from play intent and requires waiting before buffering", async () => {
+    const player = createAudioPlayer();
+    expect(player.getState().media).toEqual({ readyState: null, buffering: false, seeking: false });
+    await player.play(episodeOne);
+    const audio = Object.assign(MockAudio.instances[0], { readyState: 2, seeking: false });
+    audio.dispatch("loadeddata");
+    expect(player.getState().media.readyState).toBe(2);
+    audio.dispatch("stalled");
+    expect(player.getState().media.buffering).toBe(false);
+    audio.dispatch("waiting");
+    expect(player.getState().status).toBe("playing");
+    expect(player.getState().media.buffering).toBe(true);
+    audio.readyState = 3;
+    audio.dispatch("canplay");
+    expect(player.getState().media).toEqual({ readyState: 3, buffering: false, seeking: false });
+    player.destroy();
+  });
+
+  it.each(["pause", "seek", "load", "unload", "error", "ended", "destroy", "empty queue"])(
+    "resets buffering after %s", async (action) => {
+      const player = createAudioPlayer();
+      await player.play(episodeOne);
+      const audio = Object.assign(MockAudio.instances[0], { readyState: 2, seeking: false });
+      audio.dispatch("waiting");
+      expect(player.getState().media.buffering).toBe(true);
+      if (action === "pause") player.pause();
+      if (action === "seek") player.seek(5);
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "unload") player.unload();
+      if (action === "error") audio.dispatch("error");
+      if (action === "ended") audio.dispatch("ended");
+      if (action === "destroy") player.destroy();
+      if (action === "empty queue") await player.setQueue([]);
+      expect(player.getState().media.buffering).toBe(false);
+      if (["pause", "load", "unload", "error", "ended", "destroy", "empty queue"].includes(action)) {
+        audio.dispatch("waiting");
+        expect(player.getState().media.buffering).toBe(false);
+      }
+      player.destroy();
+    },
+  );
+
+  it("reports native seeking and clears buffering on actual resumed progress", async () => {
+    const player = createAudioPlayer();
+    await player.play(episodeOne);
+    const audio = Object.assign(MockAudio.instances[0], { readyState: 2, seeking: false });
+    audio.dispatch("waiting");
+    audio.currentTime = 1;
+    audio.dispatch("timeupdate");
+    expect(player.getState().media.buffering).toBe(false);
+    audio.seeking = true;
+    audio.dispatch("seeking");
+    expect(player.getState().media.seeking).toBe(true);
+    audio.dispatch("waiting");
+    expect(player.getState().media.buffering).toBe(false);
+    audio.seeking = false;
+    audio.dispatch("seeked");
+    expect(player.getState().media.seeking).toBe(false);
+    audio.dispatch("waiting");
+    audio.dispatch("playing");
+    expect(player.getState().media.buffering).toBe(false);
+    player.destroy();
+  });
+
   it("loads a source and reaches ready state", async () => {
     const player = createAudioPlayer();
 

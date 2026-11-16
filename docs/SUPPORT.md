@@ -24,7 +24,7 @@ Audio codec support and autoplay rules come from the browser. Start playback fro
 
 ## Unreleased 1.4 destinations
 
-Native destination controls are experimental. Runtime checks are per operation; method presence does not establish permission, device availability or receiver command support. The demo includes pickers where available and system-settings guidance otherwise. See the [destination contract](./DESTINATIONS.md) and [hardware validation record](./DESTINATION_VALIDATION.md). No physical receiver is currently available for validation; no AirPlay or output-device hardware support is claimed. Cast and Spotify Connect remain unimplemented.
+Native destination controls are experimental. Runtime checks are per operation; method presence does not establish permission, device availability or receiver command support. The demo includes pickers where available and system-settings guidance otherwise. See the [destination contract](./DESTINATIONS.md) and [hardware validation record](./DESTINATION_VALIDATION.md). The user has identified Android and a Chromecast/Google TV for manual testing, but no device result has been recorded. No AirPlay or Cast hardware support is claimed. The [Cast experiment](./CAST_PROTOTYPE.md) is outside the published package; a production adapter and Spotify Connect remain unimplemented.
 
 ## Node and build tools
 
@@ -34,4 +34,4 @@ Importing the package and creating a player on a server are supported. Playback 
 
 ## Bundle budget
 
-`npm run check:size` bundles and minifies each public entry point and measures gzip bytes, excluding React and its JSX runtime. The unreleased 1.4 core budget is 7 KiB (7,151 gzip bytes measured for the native destination prototype); stable 1.3.1 uses 6.25 KiB. The React entry point budget remains 8 KiB, including the core. The core allowance increased by 256 bytes in 1.3.1 for Media Session update tracking; the measured increase is 108 gzip bytes. These are CI regression limits, not the size of every consumer's application bundle.
+`npm run check:size` bundles and minifies each public entry point and measures gzip bytes, excluding React and its JSX runtime. The unreleased 1.4 core budget is 8 KiB (8,047 gzip bytes measured with chapter navigation and media observations); stable 1.3.1 uses 6.25 KiB. The React entry point budget remains 8 KiB, including the core. The core allowance increased by 256 bytes in 1.3.1 for Media Session update tracking; the measured increase is 108 gzip bytes. These are CI regression limits, not the size of every consumer's application bundle.

@@ -108,6 +108,7 @@
 
       <section>
         <h2>Playback</h2>
+        <p id="media-state" role="status"></p>
         <div class="controls">
           <button id="load-first" class="secondary">Load Episode 1</button>
           <button id="play">Play</button>
@@ -150,6 +151,11 @@
 
       <section>
         <h2>Now playing</h2>
+        <p id="current-chapter" role="status">No current chapter</p>
+        <div class="controls">
+          <button id="previous-chapter" class="secondary" disabled>Previous chapter</button>
+          <button id="next-chapter" class="secondary" disabled>Next chapter</button>
+        </div>
         <div id="cards" aria-live="polite"></div>
         <nav id="chapters" class="controls" aria-label="Chapters"></nav>
       </section>

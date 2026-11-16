@@ -59,6 +59,22 @@ const unsubscribe = player.subscribe((state) => {
 });
 ```
 
+## Media readiness (unreleased 1.4)
+
+`state.media` adds `{ readyState, buffering, seeking }` without changing `PlayerStatus`:
+
+```ts
+player.subscribe(({ media }) => {
+  renderLoading(media.seeking ? "seeking" : media.buffering ? "buffering" : null);
+});
+```
+
+`readyState` is the observed HTML media ready-state number (0 through 4), or null before an active source is observed, after unload, and where the property is unavailable. Metadata readiness is not a promise of enough data to play. `seeking` reports API/native seeks; it is reset on completion, pause, errors and source lifecycle transitions. `buffering` means the browser reported `waiting` while playback was requested and data was insufficient, outside a seek. `playing`, sufficient readiness, actual position progress, pause, seek, source change, error and end clear it. `stalled` reports network fetching trouble and does not itself set buffering. Connection progress remains in `player.destinations()`.
+
+This is observation, not automatic retry or recovery. No timers, playback retries, alternate URLs or output changes are started. Media state is transient and is not persisted. React consumers can select `state.media.buffering` with the existing `useAudioPlayerState` hook.
+
+Reviewed 2026-11-16 against the [HTML media readiness and playback specification](https://html.spec.whatwg.org/multipage/media.html#ready-states), [MDN waiting](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/waiting_event) and [MDN stalled](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/stalled_event) guidance.
+
 ## Queue operations
 
 ```ts

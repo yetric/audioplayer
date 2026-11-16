@@ -1,12 +1,12 @@
 # 1.4: Playback Destinations and Multimedia
 
-Status: prototype, based on stable `1.3.1`. Native destination controls are implemented for review; see [contract and evidence](./DESTINATIONS.md). Cast handoff and hardware validation remain outstanding. No 1.4 release is authorized.
+Status: prototype, based on stable `1.3.1`. Native destination controls are implemented for review; see [contract and evidence](./DESTINATIONS.md). Chapter navigation and media observations are implemented; a non-shipping controlled Cast handoff/SDK experiment exists. Hardware validation and production Cast integration remain outstanding. No 1.4 release is authorized.
 
 ## Goal
 
 Let listeners keep using the player when moving sound to headphones, speakers, and receivers. Playback commands, queue state, and timed multimedia must follow the active destination. Keep the core headless and small; expose capabilities that an application can use to build its own output controls.
 
-Remote playback is the main new workstream. Chapter convenience APIs and network resilience support that work where needed. Silence skipping remains a separate, bounded investigation rather than another release requirement.
+Remote playback is the main new workstream. Chapter navigation helpers and observed readiness/buffering are now approved 1.4 additions. Automatic network recovery remains deferred. Silence skipping remains a separate, bounded investigation rather than another release requirement.
 
 Include backend and receiver implementation wherever a selected destination needs them. The browser library remains independently usable; server support is an optional companion with a documented contract and runnable reference service. Do not leave a destination incomplete merely because part of its implementation runs on a server.
 
@@ -105,7 +105,7 @@ Native output routing can remain attached to the existing media element. Indepen
 - [x] Demonstrate the preferred path and an unsupported configuration through controlled browser fakes; physical routing remains a separate gate. Unknown device availability still permits a user-initiated picker where the platform supports it.
 - [x] A demo exposes output controls and existing chapter cards through public APIs, with keyboard-accessible controls and explicit unsupported states.
 
-Hardware validation is currently unavailable. Follow the [manual procedure and evidence record](./DESTINATION_VALIDATION.md); do not mark physical routing complete from automated mocks.
+Android and Chromecast/Google TV are available for manual testing; no result has been recorded. Follow the [manual procedure and evidence record](./DESTINATION_VALIDATION.md); do not mark physical routing complete from automated mocks.
 
 ### M2: optional Cast adapter, later beta after M0 succeeds
 
@@ -122,8 +122,8 @@ M1 is the minimum releasable 1.4 scope. M2 is the intended extension, conditiona
 
 | Item | Scheduling rule | Acceptance criteria |
 | ---- | --------------- | ------------------- |
-| Chapter navigation helpers | Next small increment if beta feedback demonstrates repeated application glue; not a second synchronization engine | Reuse the 1.3 chapter data and cue controller. Specify next/previous/current behavior, equal timestamps, explicit ends, and hidden markers before coding. Hidden markers update content without becoming navigation entries. |
-| Readiness and buffering state | Include the minimum needed for truthful local/remote UI; defer automatic recovery policies | Add state without expanding `PlayerStatus`. Distinguish connection from media buffering; reset correctly on pause, seek, source change, error, and unload. Treat `stalled` as evidence to evaluate rather than proof that buffered playback stopped. |
+| Chapter navigation helpers | Approved and implemented as `attachAudioPlayerChapters`; reuses the cue controller and player timeline | Reuse the 1.3 chapter data and cue controller. Specify next/previous/current behavior, equal timestamps, explicit ends, and hidden markers before coding. Hidden markers update content without becoming navigation entries. |
+| Readiness and buffering state | Approved and implemented as transient `state.media`; automatic recovery stays deferred | Add state without expanding `PlayerStatus`. Distinguish connection from media buffering; reset correctly on pause, seek, source change, error, and unload. Treat `stalled` as evidence to evaluate rather than proof that buffered playback stopped. |
 | Integration documentation | Required for each implemented destination | Public-API examples compile and demonstrate cleanup, unsupported routes, handoff, and cue behavior. Include backend contracts, reference-service setup, and receiver deployment where needed. Update the support matrix and troubleshooting with tested browser/device combinations. |
 
 ## Separate investigation: metadata-driven silence skipping
