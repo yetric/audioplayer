@@ -6,6 +6,9 @@ declare global { interface Window { player: AudioPlayer; } }
 const playbackSnapshot = async (page: Page) => {
   const state = JSON.parse(await page.locator("#state").innerText());
   delete state.media.readyState;
+  delete state.buffered;
+  delete state.progress.buffered;
+  delete state.progress.bufferedFraction;
   return state;
 };
 
