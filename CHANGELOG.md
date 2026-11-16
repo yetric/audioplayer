@@ -10,6 +10,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## 1.3.0 - 2026-11-16
 
+- Prevents late play-promise rejections from overwriting newer pause, source, or playback intent with a stale error
 - Promotes timed metadata to stable: `attachAudioPlayerCues`, `createPodcastChapterCues`, and the React `useAudioPlayerCues` hook
 - Supports typed overlapping cues, stable snapshots, enter/exit events, metadata refresh, and automatic cleanup
 - Converts parsed Podcasting 2.0 JSON Chapters 1.2.0, preserving hidden markers and inferred or open-ended ranges
