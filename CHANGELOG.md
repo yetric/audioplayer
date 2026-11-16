@@ -8,6 +8,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 - No unreleased changes yet
 
+## 1.3.1 - 2026-11-16
+
+- Fixes repeated Media Session metadata assignment during playback, preventing artwork refreshes caused by ordinary progress notifications
+- Represents a source's artwork URL once, preserving configured size hints in a single entry
+- Updates Media Session position on playback transitions, duration/rate changes, completed seeks, and explicit sync instead of every progress tick
+- Adds regression coverage for metadata edits, source changes, position updates, unsupported implementations, and cleanup
+- Adjusts the core gzip budget from 6 KiB to 6.25 KiB to accommodate update tracking (108 additional bytes measured)
+
 ## 1.3.0 - 2026-11-16
 
 - Prevents late play-promise rejections from overwriting newer pause, source, or playback intent with a stale error

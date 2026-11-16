@@ -30,4 +30,4 @@ Importing the package and creating a player on a server are supported. Playback 
 
 ## Bundle budget
 
-`npm run check:size` bundles and minifies each public entry point and measures gzip bytes, excluding React and its JSX runtime. The core budget is 6 KiB and the React entry point budget is 8 KiB, including the core. These are CI regression limits, not the size of every consumer's application bundle.
+`npm run check:size` bundles and minifies each public entry point and measures gzip bytes, excluding React and its JSX runtime. The core budget is 6.25 KiB and the React entry point budget is 8 KiB, including the core. The core allowance increased by 256 bytes in 1.3.1 for Media Session update tracking; the measured increase is 108 gzip bytes. These are CI regression limits, not the size of every consumer's application bundle.

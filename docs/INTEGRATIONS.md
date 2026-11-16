@@ -50,6 +50,10 @@ const mediaSession = attachAudioPlayerMediaSession(player, {
 });
 ```
 
+Metadata is replaced only when source identity or metadata fields change. One artwork entry carries the space-separated `artworkSizes` hints for the source's single URL; this does not generate resized images. An empty size list omits artwork.
+
+Playback-state changes, duration/rate changes, and completed seeks refresh position. Ordinary progress updates do not repeatedly assign metadata or position. Call `mediaSession.sync()` to explicitly refresh position; unchanged metadata remains intact. Unsupported position updates and actions are ignored. These updates follow the [Media Session position model](https://www.w3.org/TR/mediasession/#position-state).
+
 ## Cleanup
 
 ```ts
