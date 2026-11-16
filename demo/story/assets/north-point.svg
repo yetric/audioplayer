@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="720" viewBox="0 0 640 720">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#213b40"/><stop offset="1" stop-color="#799184"/></linearGradient>
+    <linearGradient id="sea" x2="0" y2="1"><stop stop-color="#33595c"/><stop offset="1" stop-color="#102d36"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#efc67f" stop-opacity=".55"/><stop offset="1" stop-color="#efc67f" stop-opacity="0"/></radialGradient>
+    <pattern id="rain" width="49" height="59" patternUnits="userSpaceOnUse"><path d="M8 3l-3 11M35 28l-2 7" stroke="#d7e0c4" stroke-opacity=".045"/></pattern>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h640v720H0z"/>
+  <circle cx="473" cy="138" r="42" fill="#c6cbb1" opacity=".75"/>
+  <path d="M385 140q67-20 167 0M370 156q87-16 206 0" stroke="#536e68" stroke-width="11" opacity=".45"/>
+  <g fill="#c7d0ba" opacity=".45"><circle cx="81" cy="105" r="1"/><circle cx="194" cy="51" r="1"/><circle cx="305" cy="142" r="1"/><circle cx="559" cy="63" r="1"/><circle cx="366" cy="66" r="1"/></g>
+  <path d="M0 359q110-17 230 4t410-3v360H0z" fill="url(#sea)"/>
+  <g stroke="#91a797" fill="none" opacity=".22"><path d="M0 389q110-8 192 0m248 0h158M10 418h135m337 1h158M0 459h122m370-3h148M0 506h143m349 0h148M36 562h126m317 0h161M0 624h142m330 0h168"/><path d="M28 401h76m435 32h69M20 486h54m461 48h77M53 591h65m391 14h96"/></g>
+  <path d="M160 720l48-95-36-46 36-50-18-40 51-63 48-41 108-7 48 38 15 88-36 47 17 60 65 109z" fill="#1c3435"/>
+  <path d="M182 720l58-96-33-41 39-56-19-33 46-52 50-25 79-1 30 49-29 74 14 66 49 115z" fill="#29413c"/>
+  <path d="M283 720l9-89-20-55 39-57-6-62 35-37" fill="none" stroke="#637164" stroke-width="9" opacity=".6"/>
+  <path d="M257 451h153v-96l-75-47-78 47z" fill="#172c30"/>
+  <path d="M246 356l89-60 90 60-9 8-81-51-82 51z" fill="#10272e"/>
+  <path d="M274 370h32v32h-32zM359 370h30v32h-30z" fill="#0b2028"/>
+  <circle cx="333" cy="356" r="70" fill="url(#glow)"/>
+  <path d="M320 339h26v29h-26z" fill="#e5b66f"/>
+  <path d="M333 339v29m-13-14h26" stroke="#4f4933" stroke-width="3"/>
+  <path d="M322 414h25v37h-25z" fill="#0d2329"/>
+  <path d="M382 316v-95m-17 25h34m-27-15h20m-10-10v-29" stroke="#263c3b" stroke-width="3"/>
+  <path d="M381 220l-63 105m64-105 55 113" stroke="#43584c" stroke-width="1"/>
+  <path d="M200 412l9-102h27l10 102z" fill="#a2aa8c"/>
+  <path d="M204 312h35v-23h-35z" fill="#273d3c"/>
+  <path d="M199 289l23-14 22 14z" fill="#132d32"/>
+  <path d="M211 294h22v12h-22z" fill="#d0bb7b" opacity=".6"/>
+  <path d="M212 358h7v14h-7z" fill="#29423e"/>
+  <path d="M251 526l-79 40-15 25m1-22 29 9m-22-18 28 10" stroke="#627367" stroke-width="4" fill="none"/>
+  <path fill="url(#rain)" d="M0 0h640v720H0z"/>
+  <text x="35" y="45" fill="#d3d7c0" font-family="monospace" font-size="11" letter-spacing="3">NORTH POINT</text>
+  <text x="35" y="64" fill="#b3c1b2" font-family="monospace" font-size="8" letter-spacing="2">ILLUSTRATION / FICTIONAL LOCATION</text>
+</svg>
