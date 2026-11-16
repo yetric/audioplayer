@@ -8,6 +8,8 @@ Headless TypeScript audio player for modern browsers.
 
 `1.3.1` is the current stable release.
 
+The unreleased [1.4 native destination prototype](./docs/DESTINATIONS.md) adds headless output controls. Hardware support is unverified.
+
 `1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 
 `1.3` adds [timed multimedia metadata](./docs/TIMED_METADATA.md) for synchronized images, links, and text, with a Podcasting 2.0 JSON Chapters adapter and React hook. Applications supply data and rendering; the library manages active cues. Run `npm run demo:start` to try the chapter demo or open `/story/` for The Last Signal, a fictional storytelling example.

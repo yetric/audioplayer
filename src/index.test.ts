@@ -161,6 +161,36 @@ describe("createAudioPlayer", () => {
     vi.stubGlobal("Audio", MockAudio);
   });
 
+  it("keeps playback intent, queue and cues through successful and failed output changes", async () => {
+    const player = createAudioPlayer();
+    await player.setQueue([episodeOne, episodeTwo]);
+    const audio = MockAudio.instances[0] as MockAudio & { setSinkId: ReturnType<typeof vi.fn> };
+    audio.setSinkId = vi.fn(async () => {});
+    const cues = attachAudioPlayerCues(player, {
+      getCues: () => [{ id: "card", start: 2, end: 20, data: "chapter" }],
+    });
+    await player.play();
+    player.seek(5);
+    audio.dispatch("seeked");
+    const before = player.getState();
+    const snapshot = cues.getSnapshot();
+    const route = player.destinations();
+    expect(player.destinations()).toBe(route);
+    expect(await route.setOutput("speaker")).toEqual({ status: "requested" });
+    audio.setSinkId.mockRejectedValue(new Error("removed"));
+    expect((await route.setOutput("removed")).status).toBe("failed");
+    expect(player.getState()).toEqual(before);
+    expect(cues.getSnapshot()).toBe(snapshot);
+    expect(snapshot.activeCues.map((cue) => cue.id)).toEqual(["card"]);
+    player.pause();
+    await player.load(episodeTwo);
+    expect((await route.setOutput("removed")).status).toBe("failed");
+    expect(player.getState().currentSourceId).toBe(episodeTwo.id);
+    expect(player.getState().status).toBe("ready");
+    player.destroy();
+    expect((await route.setOutput("")).status).toBe("destroyed");
+  });
+
   it("loads a source and reaches ready state", async () => {
     const player = createAudioPlayer();
 

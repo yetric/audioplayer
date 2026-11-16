@@ -1,6 +1,6 @@
 # 1.4: Playback Destinations and Multimedia
 
-Status: proposed, based on stable `1.3.0`. No 1.4 runtime work is implemented. Additive only; API names and packaging require a design review before implementation.
+Status: prototype, based on stable `1.3.1`. Native destination controls are implemented for review; see [contract and evidence](./DESTINATIONS.md). Cast handoff and hardware validation remain outstanding. No 1.4 release is authorized.
 
 ## Goal
 

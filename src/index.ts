@@ -1,3 +1,6 @@
+import { createDestinationsController, type AudioPlayerDestinationsController } from "./destinations.js";
+export type { AudioPlayerDestinationsController, AudioPlayerDestinationState, DestinationResult } from "./destinations.js";
+
 export type PlayerStatus =
   | "idle"
   | "loading"
@@ -200,6 +203,7 @@ export type AudioPlayerEventListener<K extends AudioPlayerEventName> = (
 ) => void;
 
 export interface AudioPlayer {
+  destinations(): AudioPlayerDestinationsController;
   getState(): AudioPlayerState;
   /** Calls the listener immediately, then on each state change. Returns an unsubscribe function. */
   subscribe(listener: (state: AudioPlayerState) => void): () => void;
@@ -483,8 +487,7 @@ const createUnavailableAudioEngine = (): AudioEngine => {
   };
 };
 
-const createHtmlAudioEngine = (): AudioEngine => {
-  const audio = createAudioElement();
+const createHtmlAudioEngine = (audio: HTMLAudioElement | null): AudioEngine => {
   if (!audio) {
     return createUnavailableAudioEngine();
   }
@@ -679,7 +682,9 @@ export const createAudioPlayer = (
   let suppressPauseEvent = false;
   let playRevision = 0;
 
-  const engine = createHtmlAudioEngine();
+  const audio = createAudioElement();
+  const engine = createHtmlAudioEngine(audio);
+  let destinations: AudioPlayerDestinationsController | undefined;
   const subscribers = new Set<(nextState: AudioPlayerState) => void>();
   const eventListeners: {
     [K in AudioPlayerEventName]: Set<AudioPlayerEventListener<K>>;
@@ -1060,6 +1065,11 @@ export const createAudioPlayer = (
   ];
 
   return {
+    destinations() {
+      destinations ??= createDestinationsController(audio);
+      if (destroyed) destinations.destroy();
+      return destinations;
+    },
     getState,
 
     subscribe(listener) {
@@ -1432,6 +1442,7 @@ export const createAudioPlayer = (
       }
 
       destroyed = true;
+      destinations?.destroy();
       shouldAutoplayAfterLoad = false;
       for (const detach of detachEngineListeners) {
         detach();
