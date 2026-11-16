@@ -93,7 +93,7 @@ Dedicated current-chapter state, a chapter hook, and navigation helpers can foll
 ### Source and loading events, follow-up candidates
 
 - `sourceready` when metadata is loaded and playback can start
-- `waiting` and `playing` for stalls and recovery (shared with the 1.4 buffering work)
+- `waiting` and `playing` for stalls and recovery (candidate supporting work in 1.4, only where needed for destination UI)
 - `sourcestart` on the first play of a source, `sourceend` when it ends
 
 ### Clock for visuals, deferred
@@ -128,7 +128,7 @@ These are where bugs and surprises come from. Each needs tests before release.
 
 ## Out of scope for this note
 
-- Audio visualization (waveform or spectrum). That needs the Web Audio API and CORS-enabled audio, and the engine currently owns the element. Tracked as an exploration in [`RELEASE_1_4.md`](./RELEASE_1_4.md) and as engine work in [`RELEASE_2_0.md`](./RELEASE_2_0.md).
+- Audio visualization (waveform or spectrum) is deferred and unscheduled, not 1.4 scope. Client-side Web Audio analysis needs engine access and suitable CORS-enabled audio. Engine exploration remains a candidate in [`RELEASE_2_0.md`](./RELEASE_2_0.md).
 - Loading cue data. The app parses feeds and fetches files. The chapter adapter accepts parsed JSON; transcript parsers are follow-up work. The library does not make network requests.
 
 ## Open questions

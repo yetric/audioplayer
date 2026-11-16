@@ -16,12 +16,13 @@ Maintain a standalone, headless browser audio library with a small public API, r
 3. State machine and events before UI helpers.
 4. Common listening flows before specialized streaming features.
 5. Progressive enhancement for Media Session and persistence.
+6. Prefer current web media APIs with runtime capability detection, tested fallbacks, and a support review before each release. Use [MDN's media guides](https://developer.mozilla.org/en-US/docs/Web/Media/Guides) and primary specifications as references.
 
-## Next focus: timed multimedia metadata
+## Current milestone: 1.3 timed multimedia metadata
 
-1.2 is shipped. The next milestone is an opt-in synchronization layer for consumer-supplied images, links, text, and other timed data. The library stays headless: applications own metadata production, fetching, and presentation.
+1.3.0 is stable. It adds an opt-in synchronization layer for consumer-supplied images, links, text, and other timed data. The library stays headless: applications own metadata production, fetching, and presentation.
 
-First deliverable for 1.3:
+Implemented in 1.3:
 
 - Typed range cues and an observable set of active cues.
 - An opt-in adapter for Podcasting 2.0 JSON Chapters, including timed images, titles, links, and hidden metadata markers. Document how parsed timed transcripts use the same cues.
@@ -32,6 +33,19 @@ First deliverable for 1.3:
 All timestamps use the original media timeline. Playback instructions such as silence skip ranges remain separate from presentation cues. A future skip controller must synchronize presentation at its destination without replaying content it skipped.
 
 Use Podcasting 2.0 formats at the boundary while keeping the core generic. Applications own RSS discovery and fetching. Dedicated chapter helpers can build on the first adapter and demo. Sleep timers, listening history, and other convenience features do not block the multimedia milestone. Details: [`RELEASE_1_3.md`](./RELEASE_1_3.md) and [`DESIGN_CUES.md`](./DESIGN_CUES.md).
+
+## Proposed next release: 1.4 playback destinations
+
+Build on the 1.3 timeline so output changes do not create a second player state or leave multimedia following the wrong audio position.
+
+- First beta: native AirPlay selection and supported audio-output selection, with Bluetooth/system-output guidance and tested fallbacks.
+- Prove a shared handoff and remote-state contract, then target Google Cast as an optional adapter in a later beta.
+- Include backend and minimal receiver work needed by each selected integration: media resolution, protected playback grants, revision-bound metadata, and provider authentication where required. Supply an optional reference service and reusable contracts; keep the core independent of a backend or any consuming app.
+- Investigate Spotify Connect separately: Spotify content and account requirements prevent treating it as a generic podcast-URL output.
+- Add chapter helpers and buffering information only where the integration needs them. Keep metadata-driven silence skipping as a separate prototype with explicit local/remote limitations.
+- Update API support and fallback evidence each release. Vendor SDKs stay optional; unsupported integrations preserve local playback.
+
+Resolve confirmed 1.3 bugs in the 1.3 release line. External beta feedback informs this work without making any application an adoption gate. The previous offline/retry/preloading and framework-packaging proposals are deferred, not automatic commitments. Scope, milestones, and release gates: [`RELEASE_1_4.md`](./RELEASE_1_4.md).
 
 ## Architecture Direction
 
@@ -96,8 +110,8 @@ Every 1.x release is additive and ships a prerelease first. Validate changes wit
 | ------- | ----- | ------- |
 | 1.1 | Quality and publishing | Shipped. StrictMode fix, more tests, OIDC publishing |
 | 1.2 | Less glue code, shipped | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
-| 1.3 | Timed multimedia metadata, next focus | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
-| 1.4 | Resilience and reach | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
+| 1.3 | Timed multimedia metadata, stable | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
+| 1.4 | Playback destinations and multimedia, proposed | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
 | 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md), [`DOCS_PLAN.md`](./DOCS_PLAN.md) |
 
 Rules:
