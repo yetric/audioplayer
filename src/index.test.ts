@@ -908,10 +908,10 @@ describe("attachAudioPlayerMediaSession", () => {
     expect(session.metadata?.init.title).toBe("Episode 1");
     expect(session.metadata?.init.artist).toBe("Artist");
     expect(session.metadata?.init.album).toBe("Album");
-    expect(session.metadata?.init.artwork).toHaveLength(6);
+    expect(session.metadata?.init.artwork).toHaveLength(1);
     expect(session.metadata?.init.artwork[0]).toEqual({
       src: "https://example.com/art.png",
-      sizes: "96x96",
+      sizes: "96x96 128x128 192x192 256x256 384x384 512x512",
     });
     expect(session.playbackState).toBe("paused");
 
@@ -930,9 +930,97 @@ describe("attachAudioPlayerMediaSession", () => {
     await player.load({ ...episodeOne, artwork: "https://example.com/a.png" });
 
     expect(session.metadata?.init.artwork.map((image) => image.sizes)).toEqual([
-      "64x64",
-      "128x128",
+      "64x64 128x128",
     ]);
+  });
+
+  it("does not replace metadata or position during ordinary playback updates", async () => {
+    const player = createAudioPlayer();
+    await player.load({ ...episodeOne, artwork: "https://example.com/art.png" });
+    const audio = MockAudio.instances[0];
+    audio.duration = 100;
+    audio.dispatch("timeupdate");
+    let metadata = session.metadata;
+    const setMetadata = vi.fn((value: MockMediaMetadata | null) => { metadata = value; });
+    Object.defineProperty(session, "metadata", { get: () => metadata, set: setMetadata });
+    let playbackState = session.playbackState;
+    const setPlaybackState = vi.fn((value: string) => { playbackState = value; });
+    Object.defineProperty(session, "playbackState", { get: () => playbackState, set: setPlaybackState });
+    const controller = attachAudioPlayerMediaSession(player);
+    await player.play();
+    session.setPositionState.mockClear();
+    setPlaybackState.mockClear();
+    for (let position = 1; position <= 10; position++) {
+      audio.currentTime = position;
+      audio.dispatch("timeupdate");
+      audio.dispatch("progress");
+    }
+    player.setVolume(0.5);
+    expect(setMetadata).toHaveBeenCalledTimes(1);
+    expect(session.setPositionState).not.toHaveBeenCalled();
+    expect(setPlaybackState).not.toHaveBeenCalled();
+    controller.sync();
+    expect(setMetadata).toHaveBeenCalledTimes(1);
+    expect(session.setPositionState).toHaveBeenLastCalledWith({ duration: 100, playbackRate: 1, position: 10 });
+  });
+
+  it("detects metadata edits on the same source and clears artwork on removal", async () => {
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerMediaSession(player);
+    const source = { ...episodeOne, artist: "Artist", album: "Album", artwork: "https://example.com/a.png" };
+    await player.load(source);
+    for (const [key, value] of Object.entries({ title: "New title", artist: "New artist", album: "New album", artwork: "https://example.com/b.png" })) {
+      const previous = session.metadata;
+      Object.assign(source, { [key]: value });
+      controller.sync();
+      expect(session.metadata).not.toBe(previous);
+    }
+    source.artwork = "";
+    controller.sync();
+    expect(session.metadata?.init.artwork).toEqual([]);
+    await player.load(episodeTwo);
+    expect(session.metadata?.init.title).toBe("Episode 2");
+    player.unload();
+    expect(session.metadata).toBeNull();
+  });
+
+  it("refreshes position after seeks, rate changes, pause, and duration changes", async () => {
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerMediaSession(player);
+    await player.load(episodeOne);
+    const audio = MockAudio.instances[0];
+    audio.duration = 100;
+    audio.dispatch("timeupdate");
+    await player.play();
+    session.setPositionState.mockClear();
+    audio.currentTime = 42;
+    audio.dispatch("seeked");
+    expect(session.setPositionState).toHaveBeenCalledTimes(1);
+    expect(session.setPositionState).toHaveBeenLastCalledWith({ duration: 100, playbackRate: 1, position: 42 });
+    audio.playbackRate = 1.5;
+    audio.dispatch("ratechange");
+    expect(session.setPositionState).toHaveBeenLastCalledWith({ duration: 100, playbackRate: 1.5, position: 42 });
+    audio.currentTime = 45;
+    player.pause();
+    expect(session.setPositionState).toHaveBeenLastCalledWith({ duration: 100, playbackRate: 1.5, position: 45 });
+    audio.duration = 120;
+    audio.dispatch("timeupdate");
+    expect(session.setPositionState).toHaveBeenLastCalledWith({ duration: 120, playbackRate: 1.5, position: 45 });
+    controller.destroy();
+    session.setPositionState.mockClear();
+    audio.dispatch("seeked");
+    controller.sync();
+    expect(session.setPositionState).not.toHaveBeenCalled();
+  });
+
+  it("keeps metadata working when position updates are unsupported", async () => {
+    session.setPositionState.mockImplementation(() => { throw new TypeError("unsupported"); });
+    const player = createAudioPlayer();
+    const controller = attachAudioPlayerMediaSession(player, { artworkSizes: [] });
+    await player.load({ ...episodeOne, artwork: "https://example.com/a.png" });
+    expect(session.metadata?.init.artwork).toEqual([]);
+    expect(() => controller.sync()).not.toThrow();
+    expect(() => controller.destroy()).not.toThrow();
   });
 
   it("syncs position state when a duration is known and clears it otherwise", async () => {

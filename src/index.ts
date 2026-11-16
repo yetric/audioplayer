@@ -621,14 +621,11 @@ const createMediaSessionArtwork = (
   source: AudioSource | null,
   sizes: number[],
 ): MediaImage[] => {
-  if (!source?.artwork) {
+  if (!source?.artwork || sizes.length === 0) {
     return [];
   }
 
-  return sizes.map((size) => ({
-    src: source.artwork as string,
-    sizes: `${size}x${size}`,
-  }));
+  return [{ src: source.artwork, sizes: sizes.map((size) => `${size}x${size}`).join(" ") }];
 };
 
 /** Best-effort browser storage. Unavailable, denied, or full storage never interrupts playback. */
@@ -1743,48 +1740,57 @@ export const attachAudioPlayerMediaSession = (
   const seekOffsetSeconds =
     options.seekOffsetSeconds ?? DEFAULT_MEDIA_SESSION_SEEK_OFFSET_SECONDS;
   let destroyed = false;
+  let metadataKey: string | undefined;
+  let positionKey: string | undefined;
 
-  const sync = (): void => {
+  const sync = (forcePosition = true): void => {
     if (destroyed || !hasMediaSession()) {
       return;
     }
 
     const state = player.getState();
     const source = state.currentSource;
+    const nextMetadataKey = JSON.stringify([
+      source?.id, source?.title, source?.artist, source?.album, source?.artwork, artworkSizes,
+    ]);
+    if (metadataKey !== nextMetadataKey) {
+      navigator.mediaSession.metadata = source
+        ? new MediaMetadata({
+            title: source.title ?? "",
+            artist: source.artist ?? "",
+            album: source.album ?? "",
+            artwork: createMediaSessionArtwork(source, artworkSizes),
+          })
+        : null;
+      metadataKey = nextMetadataKey;
+    }
 
-    navigator.mediaSession.metadata = source
-      ? new MediaMetadata({
-          title: source.title ?? "",
-          artist: source.artist ?? "",
-          album: source.album ?? "",
-          artwork: createMediaSessionArtwork(source, artworkSizes),
-        })
-      : null;
-
-    navigator.mediaSession.playbackState =
+    const playbackState =
       state.status === "playing"
         ? "playing"
         : state.currentSource
           ? "paused"
           : "none";
+    if (navigator.mediaSession.playbackState !== playbackState) {
+      navigator.mediaSession.playbackState = playbackState;
+    }
 
-    if (state.currentSource && state.duration > 0) {
-      try {
+    const nextPositionKey = JSON.stringify([source?.id, state.status, state.duration, state.rate]);
+    if (!forcePosition && positionKey === nextPositionKey) return;
+    try {
+      if (source && state.duration > 0) {
         navigator.mediaSession.setPositionState({
           duration: state.duration,
           playbackRate: state.rate,
           position: Math.min(state.currentTime, state.duration),
         });
-      } catch {
-        // Ignore unsupported position state implementations.
-      }
-    } else {
-      try {
+      } else {
         navigator.mediaSession.setPositionState();
-      } catch {
-        // Ignore unsupported position state implementations.
       }
+    } catch {
+      // Ignore unsupported position state implementations.
     }
+    positionKey = nextPositionKey;
   };
 
   const setActionHandler = (
@@ -1828,16 +1834,16 @@ export const attachAudioPlayerMediaSession = (
   });
 
   const stateUnsubscribe = player.subscribe(() => {
-    sync();
+    sync(false);
   });
-
-  sync();
+  const seekUnsubscribe = player.on("seeked", () => sync());
 
   return {
     sync,
     destroy() {
       destroyed = true;
       stateUnsubscribe();
+      seekUnsubscribe();
       if (!hasMediaSession()) {
         return;
       }

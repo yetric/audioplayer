@@ -6,7 +6,7 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.3.0` is the current stable release.
+`1.3.1` is the current stable release.
 
 `1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 
