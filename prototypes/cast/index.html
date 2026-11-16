@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cast handoff experiment</title>
+<style>body{font:16px system-ui;max-width:65rem;margin:2rem auto;padding:0 1rem}button,input{font:inherit;margin:.3rem;padding:.5rem}label{display:block}input[type=url]{width:90%}pre{white-space:pre-wrap;overflow-wrap:anywhere}button:disabled{opacity:.5}</style></head>
+<body>
+<h1>Cast handoff experiment</h1>
+<p>Development prototype, outside the published package. Use Chrome on Android or a supported desktop sender over HTTPS. No protected-media, receiver or hardware support is claimed.</p>
+<label>Public HTTPS media URL <input id="url" type="url" required></label>
+<label>Content type <input id="type" value="audio/mpeg"></label>
+<label>Audio revision <input id="revision" value="last-signal-parcel-v1" required></label>
+<button id="load">Load public media</button><button id="play">Play</button><button id="pause">Pause</button>
+<button id="seek">Seek to 10 seconds</button><button id="next">Next chapter</button>
+<p><button id="sdk">Enable Google Cast SDK</button><button id="connect" disabled>Choose Cast receiver</button>
+<button id="local" disabled>Return here, paused</button><button id="resume" disabled>Return here and play</button></p>
+<p id="result" role="status">SDK is not loaded. Receiver testing requires device-reachable HTTPS media.</p>
+<p id="chapter" role="status"></p><pre id="state"></pre>
+<script type="module" src="./sender.ts"></script>
+</body></html>

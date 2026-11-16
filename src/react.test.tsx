@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { StrictMode, act } from "react";
+import { StrictMode, act, useEffect, useSyncExternalStore } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createAudioPlayer,
   attachAudioPlayerCues,
+  attachAudioPlayerChapters,
+  createPodcastChapterCues,
   type AudioPlayer,
   type AudioPlayerState,
   type PersistedPlayerState,
@@ -205,6 +207,72 @@ describe("react adapter", () => {
     });
 
     expect(destroy).toHaveBeenCalledTimes(1);
+    root = createRoot(container);
+  });
+
+  it("keeps destination subscriptions usable across StrictMode replay and closes pending selection on real unmount", async () => {
+    let resolve!: (device: { deviceId: string }) => void;
+    vi.stubGlobal("navigator", { mediaDevices: {
+      selectAudioOutput: () => new Promise((done) => { resolve = done; }),
+    } });
+    const changes = vi.fn();
+    const detach = vi.fn();
+    const Output = () => {
+      const player = useAudioPlayer();
+      captured.player = player;
+      useEffect(() => {
+        const unsubscribe = player.destinations().subscribe(changes);
+        return () => { unsubscribe(); detach(); };
+      }, [player]);
+      return null;
+    };
+    render(<StrictMode><AudioPlayerProvider><Output /></AudioPlayerProvider></StrictMode>);
+    await act(async () => {});
+    expect(detach).toHaveBeenCalledTimes(1);
+    const audio = FakeAudio.instances.at(-1) as FakeAudio & { setSinkId: ReturnType<typeof vi.fn> };
+    audio.setSinkId = vi.fn(async () => {});
+    const route = captured.player!.destinations();
+    expect((await route.setOutput("")).status).toBe("applied");
+    const pending = route.selectOutput();
+    await act(async () => { root.unmount(); });
+    expect(detach).toHaveBeenCalledTimes(2);
+    const count = changes.mock.calls.length;
+    resolve({ deviceId: "speaker" });
+    expect((await pending).status).toBe("destroyed");
+    expect(audio.setSinkId).toHaveBeenCalledTimes(1);
+    expect(changes).toHaveBeenCalledTimes(count);
+    root = createRoot(container);
+  });
+
+  it("subscribes to chapter snapshots and buffering under StrictMode without a render per tick", async () => {
+    const player = createAudioPlayer();
+    await player.load(episode);
+    const chapters = attachAudioPlayerChapters(player, { getCues: (source) => createPodcastChapterCues({
+      version: "1.2.0", chapters: [{ startTime: 0, title: "Intro" }, { startTime: 10, title: "Later" }],
+    }, { sourceId: source.id }) });
+    let renders = 0;
+    const Screen = () => {
+      const snapshot = useSyncExternalStore(chapters.subscribe, chapters.getSnapshot, chapters.getSnapshot);
+      const buffering = useAudioPlayerState((state) => state.media.buffering);
+      renders++;
+      return <p>{snapshot.current?.data.title}:{String(buffering)}</p>;
+    };
+    render(<StrictMode><AudioPlayerProvider player={player}><Screen /></AudioPlayerProvider></StrictMode>);
+    const count = renders;
+    const audio = Object.assign(FakeAudio.instances[0], { readyState: 2 });
+    act(() => { audio.currentTime = 1; audio.dispatch("timeupdate"); });
+    expect(renders).toBe(count);
+    await act(async () => { await player.play(); });
+    act(() => audio.dispatch("waiting"));
+    expect(container.textContent).toBe("Intro:true");
+    act(() => player.pause());
+    expect(container.textContent).toBe("Intro:false");
+    act(() => { chapters.next(); audio.dispatch("seeked"); });
+    expect(container.textContent).toBe("Later:false");
+    await act(async () => root.unmount());
+    expect(chapters.getSnapshot().current?.start).toBe(10);
+    chapters.destroy();
+    player.destroy();
     root = createRoot(container);
   });
 

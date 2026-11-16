@@ -188,6 +188,14 @@ The exported player state is intended to be plain-data and serializable:
 - `ended`: playback finished without silent reset
 - `error`: last operation failed
 
+### `media` (unreleased 1.4)
+
+An additive `AudioPlayerMediaState` snapshot reports `readyState: number | null`, `buffering: boolean` and `seeking: boolean`. It is independent of `PlayerStatus` and native destination connection state. These values describe observed media activity, not automatic network recovery or audible hardware confirmation. See the [readiness contract](./CORE_GUIDE.md#media-readiness-unreleased-14).
+
+### Chapter navigation (unreleased 1.4)
+
+`attachAudioPlayerChapters` owns an existing-style cue controller and adds stable chapter navigation snapshots and seek helpers. It does not own a separate playback timeline. Hidden markers, ties, explicit ends and previous/restart behavior are specified in [timed metadata](./TIMED_METADATA.md#chapter-navigation-unreleased-14).
+
 ### `queue`
 
 - Queue state is always present, even when empty

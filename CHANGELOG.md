@@ -6,7 +6,16 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## Unreleased
 
-- No unreleased changes yet
+- Adds an experimental lazy `player.destinations()` controller for native remote pickers and permitted audio outputs, with separate capability and operation results
+- Raises the unreleased core gzip budget to 8 KiB for native destinations, chapter helpers and media observation (8047 bytes measured); React remains within its existing 8 KiB budget
+- Separates remote picker completion (`prompted`) from applied sinks (`applied`), exposes pending operations and unknown native receiver command support
+- Invalidates pending selection after source replacement, reload, queue transitions and unload; observes permitted output device removal without silently changing routes
+- Adds keyboard-accessible demo controls, lifecycle and React StrictMode coverage, a typechecked binding example, hardware validation procedure and provider feasibility decisions
+
+- Adds `attachAudioPlayerChapters` with current/next/previous snapshots, seek helpers, hidden-marker and tie rules, explicit gaps, and reuse of the timed-cue controller
+- Adds transient `state.media` readiness, seeking and buffering observations without changing `PlayerStatus` or adding automatic network recovery
+- Adds a non-shipping Cast handoff experiment, opt-in SDK sender page, controlled receiver/SDK tests, and Android/HTTPS setup instructions; no published Cast adapter or protected-media support is claimed
+- Normalizes numeric `DOMException.code` values through the typed player error path and handles failed rate/volume/mute setters without reporting an applied value
 
 ## 1.3.1 - 2026-11-16
 

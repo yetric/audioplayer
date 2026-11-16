@@ -13,9 +13,16 @@ test("ESM and CommonJS exports load without browser globals", async () => {
   for (const create of [createAudioPlayer, require("@yetric/audioplayer").createAudioPlayer]) {
     const player = create();
     assert.equal(player.getState().status, "idle");
+    assert.deepEqual(player.getState().media, { readyState: null, buffering: false, seeking: false });
     await player.load({ id: "server", src: "https://example.com/audio.wav" });
     assert.equal(player.getState().error.code, "UNSUPPORTED_ENVIRONMENT");
+    const destinations = player.destinations();
+    assert.equal(destinations.getState().remote.picker, null);
+    assert.equal(destinations.getState().output.canSelect, false);
+    assert.equal((await destinations.promptRemote()).status, "unsupported");
+    assert.equal((await destinations.setOutput("")).status, "unsupported");
     player.destroy();
+    assert.equal((await destinations.selectOutput()).status, "destroyed");
   }
   assert.equal(typeof require("@yetric/audioplayer/react").AudioPlayerProvider, "function");
 });
@@ -39,7 +46,9 @@ test("chapter conversion and cue controllers load from ESM and CommonJS", () => 
     const chapters = api.createPodcastChapterCues({ version: "1.2.0", chapters: [{ startTime: 0 }] }, { sourceId: "episode" });
     assert.equal(chapters[0].id, "episode:chapter:0");
     const player = api.createAudioPlayer();
-    const controller = api.attachAudioPlayerCues(player, { getCues: () => chapters });
+    const navigation = api.attachAudioPlayerChapters(player, { getCues: () => chapters });
+    assert.equal(navigation.next(), false);
+    const controller = navigation.cues;
     assert.deepEqual(controller.getSnapshot(), { sourceId: null, activeCues: [] });
     player.destroy();
     assert.equal(typeof require("@yetric/audioplayer/react").useAudioPlayerCues, "function");

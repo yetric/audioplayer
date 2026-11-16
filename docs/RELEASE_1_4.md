@@ -1,12 +1,12 @@
 # 1.4: Playback Destinations and Multimedia
 
-Status: proposed, based on stable `1.3.0`. No 1.4 runtime work is implemented. Additive only; API names and packaging require a design review before implementation.
+Status: prototype, based on stable `1.3.1`. Native destination controls are implemented for review; see [contract and evidence](./DESTINATIONS.md). Chapter navigation and media observations are implemented; a non-shipping controlled Cast handoff/SDK experiment exists. Hardware validation and production Cast integration remain outstanding. No 1.4 release is authorized.
 
 ## Goal
 
 Let listeners keep using the player when moving sound to headphones, speakers, and receivers. Playback commands, queue state, and timed multimedia must follow the active destination. Keep the core headless and small; expose capabilities that an application can use to build its own output controls.
 
-Remote playback is the main new workstream. Chapter convenience APIs and network resilience support that work where needed. Silence skipping remains a separate, bounded investigation rather than another release requirement.
+Remote playback is the main new workstream. Chapter navigation helpers and observed readiness/buffering are now approved 1.4 additions. Automatic network recovery remains deferred. Silence skipping remains a separate, bounded investigation rather than another release requirement.
 
 Include backend and receiver implementation wherever a selected destination needs them. The browser library remains independently usable; server support is an optional companion with a documented contract and runnable reference service. Do not leave a destination incomplete merely because part of its implementation runs on a server.
 
@@ -33,14 +33,14 @@ MDN currently marks Remote Playback as limited availability and `selectAudioOutp
 
 `1.3.0` provides generic range cues, indexed active snapshots, enter/exit events, metadata refresh, a parsed Podcasting 2.0 JSON Chapters adapter, and `useAudioPlayerCues(controller)`. The demo uses local audio and artwork and demonstrates chapter navigation. The stable release includes the fictional storytelling demo and passed 114 unit tests and 33 browser cases. See [Timed metadata](./TIMED_METADATA.md).
 
-The current engine owns one private `HTMLAudioElement`. Public commands control that local engine, and cues subscribe to its state. There is no output picker, destination state, remote command routing, or remote position source. Adding a Cast button alone would leave two players with conflicting state.
+The current engine owns one private `HTMLAudioElement`. Public commands control that local engine, and cues subscribe to its state. The unreleased prototype adds native output pickers and separate destination state on that same element. Independent receiver command routing and remote position authority remain unimplemented. Adding a Cast button alone would leave two players with conflicting state.
 
 Consumer feedback informs feature design; the library remains independently usable and no application adoption is a release dependency.
 
 ## Before starting 1.4
 
 1. Triage feedback and fix reproducible 1.3 defects in patch releases before adding destination behavior. The 1.3 public API is stable.
-2. Address [Media Session issue #35](https://github.com/yetric/audioplayer/issues/35) in the 1.3 release line: metadata is currently replaced on every state notification. Test assignment frequency and repeated artwork entries; preserve the existing public options. This fix should not wait for 1.4.
+2. Completed: [Media Session issue #35](https://github.com/yetric/audioplayer/issues/35) was fixed and released in 1.3.1, with metadata assignment and artwork regression coverage.
 3. Record the stable 1.3 contract and supported browser baseline. No existing source, command, status, persistence, or cue semantics may break in 1.4.
 
 External adoption is not a release gate. Confirmed 1.3 defects belong in patch releases.
@@ -88,13 +88,13 @@ Native output routing can remain attached to the existing media element. Indepen
 
 ### M0: stabilize 1.3 and prove the architecture
 
-- [ ] Triage beta findings and separate bug fixes from 1.4 requests; resolve #35 in the 1.3 line.
-- [ ] Write a small destination/capability contract with explicit unsupported, unavailable, connecting, connected, and failure behavior. Names are provisional, not new `PlayerStatus` values.
-- [ ] Build a dated API/support/fallback matrix from MDN and vendor sources, including secure-context, permission, user-activation, and receiver requirements. Test partial API support and runtime rejection, not just missing methods.
+- [x] Review current open issues and keep confirmed 1.3 defects in patch releases. Issue #35 is resolved in 1.3.1; the 2026-11-16 open-issue review found enhancement requests and no open bug-labeled issue. Continue triage during beta.
+- [x] Write a small destination/capability contract with explicit unsupported, unavailable, connecting, connected, and failure behavior. Names are provisional, not new `PlayerStatus` values.
+- [x] Build a dated API/support/fallback matrix from MDN and vendor sources, including secure-context, permission, user-activation, and receiver requirements. Test partial API support and runtime rejection, not just missing methods.
 - [ ] Prototype AirPlay on the existing element and Cast handoff with remote play/pause/seek and position updates. Record browser, OS, receiver, source URL requirements, and limitations.
-- [ ] Decide optional export/package layout and review bundle impact before committing to the Cast adapter.
-- [ ] Inventory backend requirements and define the public/protected source-resolution contract, reference service, and minimal receiver changes needed by the protected-media case. Record which flows need no backend.
-- [ ] Produce a Spotify Connect feasibility note with a clear implement/defer recommendation and a viable content example if available.
+- [x] Review native bundle impact and define conditional optional Cast packaging in [the architecture review](./DESIGN_CAST_HANDOFF.md); no Cast export is committed before its prototype passes.
+- [x] Inventory backend requirements and define a draft public/protected resolver contract and service scope in [the architecture review](./DESIGN_CAST_HANDOFF.md). Receiver renewal remains unproven and must be validated with implementation.
+- [x] Produce a [Spotify Connect feasibility note](./SPOTIFY_CONNECT_FEASIBILITY.md): defer; a documented catalog track is identified as an untested experiment, with no verified podcast/timeline mapping.
 
 ### M1: first 1.4 beta, native output controls
 
@@ -102,8 +102,10 @@ Native output routing can remain attached to the existing media element. Indepen
 - [ ] Unsupported browsers, no devices, denied permissions, and picker cancellation preserve working local playback and give applications enough information for appropriate UI.
 - [ ] Bluetooth/system route changes preserve source identity and playback position. Use system settings where there is no browser picker; no Bluetooth pairing API is implied.
 - [ ] Unit tests cover capability checks, selection errors, listener cleanup, source changes, and callback reentrancy. Browser tests cover supported API behavior with controlled fakes; physical-device checks verify actual routing.
-- [ ] Demonstrate both the preferred path and fallback on at least one constrained configuration. Unknown device availability still permits a user-initiated picker where the platform supports it.
-- [ ] A demo exposes output controls and existing chapter cards through public APIs, with keyboard-accessible controls and explicit unsupported states.
+- [x] Demonstrate the preferred path and an unsupported configuration through controlled browser fakes; physical routing remains a separate gate. Unknown device availability still permits a user-initiated picker where the platform supports it.
+- [x] A demo exposes output controls and existing chapter cards through public APIs, with keyboard-accessible controls and explicit unsupported states.
+
+Android and Chromecast/Google TV are available for manual testing; no result has been recorded. Follow the [manual procedure and evidence record](./DESTINATION_VALIDATION.md); do not mark physical routing complete from automated mocks.
 
 ### M2: optional Cast adapter, later beta after M0 succeeds
 
@@ -120,8 +122,8 @@ M1 is the minimum releasable 1.4 scope. M2 is the intended extension, conditiona
 
 | Item | Scheduling rule | Acceptance criteria |
 | ---- | --------------- | ------------------- |
-| Chapter navigation helpers | Next small increment if beta feedback demonstrates repeated application glue; not a second synchronization engine | Reuse the 1.3 chapter data and cue controller. Specify next/previous/current behavior, equal timestamps, explicit ends, and hidden markers before coding. Hidden markers update content without becoming navigation entries. |
-| Readiness and buffering state | Include the minimum needed for truthful local/remote UI; defer automatic recovery policies | Add state without expanding `PlayerStatus`. Distinguish connection from media buffering; reset correctly on pause, seek, source change, error, and unload. Treat `stalled` as evidence to evaluate rather than proof that buffered playback stopped. |
+| Chapter navigation helpers | Approved and implemented as `attachAudioPlayerChapters`; reuses the cue controller and player timeline | Reuse the 1.3 chapter data and cue controller. Specify next/previous/current behavior, equal timestamps, explicit ends, and hidden markers before coding. Hidden markers update content without becoming navigation entries. |
+| Readiness and buffering state | Approved and implemented as transient `state.media`; automatic recovery stays deferred | Add state without expanding `PlayerStatus`. Distinguish connection from media buffering; reset correctly on pause, seek, source change, error, and unload. Treat `stalled` as evidence to evaluate rather than proof that buffered playback stopped. |
 | Integration documentation | Required for each implemented destination | Public-API examples compile and demonstrate cleanup, unsupported routes, handoff, and cue behavior. Include backend contracts, reference-service setup, and receiver deployment where needed. Update the support matrix and troubleshooting with tested browser/device combinations. |
 
 ## Separate investigation: metadata-driven silence skipping

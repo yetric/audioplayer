@@ -161,6 +161,174 @@ describe("createAudioPlayer", () => {
     vi.stubGlobal("Audio", MockAudio);
   });
 
+  it("keeps playback intent, queue and cues through successful and failed output changes", async () => {
+    const player = createAudioPlayer();
+    await player.setQueue([episodeOne, episodeTwo]);
+    const audio = MockAudio.instances[0] as MockAudio & { setSinkId: ReturnType<typeof vi.fn> };
+    audio.setSinkId = vi.fn(async () => {});
+    const cues = attachAudioPlayerCues(player, {
+      getCues: () => [{ id: "card", start: 2, end: 20, data: "chapter" }],
+    });
+    await player.play();
+    player.seek(5);
+    audio.dispatch("seeked");
+    const before = player.getState();
+    const snapshot = cues.getSnapshot();
+    const route = player.destinations();
+    expect(player.destinations()).toBe(route);
+    expect(await route.setOutput("speaker")).toEqual({ status: "applied", sinkId: "" });
+    audio.setSinkId.mockRejectedValue(new Error("removed"));
+    expect((await route.setOutput("removed")).status).toBe("failed");
+    expect(player.getState()).toEqual(before);
+    expect(cues.getSnapshot()).toBe(snapshot);
+    expect(snapshot.activeCues.map((cue) => cue.id)).toEqual(["card"]);
+    player.pause();
+    await player.load(episodeTwo);
+    expect((await route.setOutput("removed")).status).toBe("failed");
+    expect(player.getState().currentSourceId).toBe(episodeTwo.id);
+    expect(player.getState().status).toBe("ready");
+    player.destroy();
+    expect((await route.setOutput("")).status).toBe("destroyed");
+  });
+
+  it.each(["load", "same source", "unload", "empty queue", "next"])(
+    "does not apply a late output selection after %s", async (action) => {
+      let resolve!: (device: { deviceId: string }) => void;
+      vi.stubGlobal("navigator", { mediaDevices: {
+        selectAudioOutput: () => new Promise((done) => { resolve = done; }),
+      } });
+      const player = createAudioPlayer();
+      await player.setQueue([episodeOne, episodeTwo]);
+      await player.play();
+      const audio = MockAudio.instances[0] as MockAudio & { setSinkId: ReturnType<typeof vi.fn> };
+      audio.setSinkId = vi.fn(async () => {});
+      const route = player.destinations();
+      const pending = route.selectOutput();
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "same source") await player.load(episodeOne);
+      if (action === "unload") player.unload();
+      if (action === "empty queue") await player.setQueue([]);
+      if (action === "next") await player.next();
+      const current = player.getState();
+      resolve({ deviceId: "old-choice" });
+      expect(await pending).toEqual({ status: "superseded" });
+      expect(audio.setSinkId).not.toHaveBeenCalled();
+      expect(player.getState()).toEqual(current);
+      player.destroy();
+    },
+  );
+
+  it("does not override a pause made while output selection is pending", async () => {
+    let resolve!: (device: { deviceId: string }) => void;
+    vi.stubGlobal("navigator", { mediaDevices: {
+      selectAudioOutput: () => new Promise((done) => { resolve = done; }),
+    } });
+    const player = createAudioPlayer();
+    await player.play(episodeOne);
+    const audio = MockAudio.instances[0] as MockAudio & { setSinkId: ReturnType<typeof vi.fn> };
+    audio.setSinkId = vi.fn(async () => {});
+    const pending = player.destinations().selectOutput();
+    player.pause();
+    resolve({ deviceId: "speaker" });
+    expect((await pending).status).toBe("applied");
+    expect(player.getState().status).toBe("paused");
+    player.destroy();
+  });
+
+  it.each(["pause", "load", "unload", "destroy"])(
+    "ignores late native connection completion after %s without changing playback", async (action) => {
+      let finish!: () => void;
+      const player = createAudioPlayer();
+      await player.play(episodeOne);
+      const remote = Object.assign(new EventTarget(), {
+        state: "disconnected",
+        prompt: () => new Promise<void>((resolve) => { finish = resolve; }),
+      });
+      Object.assign(MockAudio.instances[0], { remote });
+      const route = player.destinations();
+      const pending = route.promptRemote();
+      if (action === "pause") player.pause();
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "unload") player.unload();
+      if (action === "destroy") player.destroy();
+      const before = player.getState();
+      remote.state = "connected";
+      remote.dispatchEvent(new Event("connect"));
+      finish();
+      expect((await pending).status).toBe(action === "destroy" ? "destroyed"
+        : action === "pause" ? "prompted" : "superseded");
+      expect(player.getState()).toEqual(before);
+      remote.state = "disconnected";
+      remote.dispatchEvent(new Event("disconnect"));
+      expect(player.getState()).toEqual(before);
+      player.destroy();
+    },
+  );
+
+  it("observes readyState separately from play intent and requires waiting before buffering", async () => {
+    const player = createAudioPlayer();
+    expect(player.getState().media).toEqual({ readyState: null, buffering: false, seeking: false });
+    await player.play(episodeOne);
+    const audio = Object.assign(MockAudio.instances[0], { readyState: 2, seeking: false });
+    audio.dispatch("loadeddata");
+    expect(player.getState().media.readyState).toBe(2);
+    audio.dispatch("stalled");
+    expect(player.getState().media.buffering).toBe(false);
+    audio.dispatch("waiting");
+    expect(player.getState().status).toBe("playing");
+    expect(player.getState().media.buffering).toBe(true);
+    audio.readyState = 3;
+    audio.dispatch("canplay");
+    expect(player.getState().media).toEqual({ readyState: 3, buffering: false, seeking: false });
+    player.destroy();
+  });
+
+  it.each(["pause", "seek", "load", "unload", "error", "ended", "destroy", "empty queue"])(
+    "resets buffering after %s", async (action) => {
+      const player = createAudioPlayer();
+      await player.play(episodeOne);
+      const audio = Object.assign(MockAudio.instances[0], { readyState: 2, seeking: false });
+      audio.dispatch("waiting");
+      expect(player.getState().media.buffering).toBe(true);
+      if (action === "pause") player.pause();
+      if (action === "seek") player.seek(5);
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "unload") player.unload();
+      if (action === "error") audio.dispatch("error");
+      if (action === "ended") audio.dispatch("ended");
+      if (action === "destroy") player.destroy();
+      if (action === "empty queue") await player.setQueue([]);
+      expect(player.getState().media.buffering).toBe(false);
+      if (["pause", "load", "unload", "error", "ended", "destroy", "empty queue"].includes(action)) {
+        audio.dispatch("waiting");
+        expect(player.getState().media.buffering).toBe(false);
+      }
+      player.destroy();
+    },
+  );
+
+  it("reports native seeking and clears buffering on actual resumed progress", async () => {
+    const player = createAudioPlayer();
+    await player.play(episodeOne);
+    const audio = Object.assign(MockAudio.instances[0], { readyState: 2, seeking: false });
+    audio.dispatch("waiting");
+    audio.currentTime = 1;
+    audio.dispatch("timeupdate");
+    expect(player.getState().media.buffering).toBe(false);
+    audio.seeking = true;
+    audio.dispatch("seeking");
+    expect(player.getState().media.seeking).toBe(true);
+    audio.dispatch("waiting");
+    expect(player.getState().media.buffering).toBe(false);
+    audio.seeking = false;
+    audio.dispatch("seeked");
+    expect(player.getState().media.seeking).toBe(false);
+    audio.dispatch("waiting");
+    audio.dispatch("playing");
+    expect(player.getState().media.buffering).toBe(false);
+    player.destroy();
+  });
+
   it("loads a source and reaches ready state", async () => {
     const player = createAudioPlayer();
 

@@ -101,3 +101,56 @@ test("chapter metadata drives images, text, links and navigation across seeks an
   await expect(cards).toBeEmpty();
   await expect(navigation).toBeHidden();
 });
+
+test("chapter helpers navigate visible chapters without changing playback intent", async ({ page }) => {
+  await page.goto("/demo/");
+  await page.getByRole("button", { name: "Load Episode 1", exact: true }).click();
+  await expect(page.locator("#current-chapter")).toHaveText("Studio notes");
+  const next = page.getByRole("button", { name: "Next chapter", exact: true });
+  await next.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#current-chapter")).toHaveText("Further listening");
+  await expect.poll(async () => JSON.parse(await page.locator("#state").innerText()).currentTime).toBeCloseTo(4, 1);
+  await expect.poll(async () => JSON.parse(await page.locator("#state").innerText()).status).toBe("ready");
+  await expect(next).toBeDisabled();
+  await page.getByRole("button", { name: "Previous chapter", exact: true }).click();
+  await expect(page.locator("#current-chapter")).toHaveText("Studio notes");
+  await expect.poll(async () => JSON.parse(await page.locator("#state").innerText()).currentTime).toBeCloseTo(0, 1);
+});
+
+test("exposes real media readiness and clears seeking after native completion", async ({ page }) => {
+  await page.evaluate(() => window.player.load({ id: "ready", src: "/examples/audio/tone.wav" }));
+  await expect.poll(() => page.evaluate(() => window.player.getState().media.readyState)).toBeGreaterThanOrEqual(1);
+  await page.click("#play");
+  await expect.poll(() => page.evaluate(() => window.player.getState().currentTime)).toBeGreaterThan(0);
+  await page.evaluate(() => window.player.seek(5));
+  await expect.poll(() => page.evaluate(() => window.player.getState().media.seeking)).toBe(false);
+  expect(await page.evaluate(() => window.player.getState().media.buffering)).toBe(false);
+  await page.evaluate(() => window.player.unload());
+  expect(await page.evaluate(() => window.player.getState().media)).toEqual({ readyState: null, buffering: false, seeking: false });
+});
+
+
+test("Cast experiment runs local playback without loading a vendor SDK and explains HTTPS", async ({ page }) => {
+  const sdkRequests: string[] = [];
+  page.on("request", (request) => { if (request.url().includes("cast_sender.js")) sdkRequests.push(request.url()); });
+  await page.route("https://media.example/fixture.wav", async (route) => {
+    const range = route.request().headers().range;
+    const response = await page.request.get("/examples/audio/tone.wav", { headers: range ? { range } : {} });
+    await route.fulfill({ response });
+  });
+  await page.goto("/prototypes/cast/");
+  await page.locator("#url").fill("https://media.example/fixture.wav");
+  await page.locator("#type").fill("audio/wav");
+  await page.getByRole("button", { name: "Load public media", exact: true }).click();
+  await expect.poll(async () => JSON.parse(await page.locator("#state").innerText()).status).toBe("ready");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await expect.poll(async () => JSON.parse(await page.locator("#state").innerText()).currentTime).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await page.getByRole("button", { name: "Seek to 10 seconds", exact: true }).click();
+  await expect(page.locator("#chapter")).toHaveText("Second chapter");
+  expect(sdkRequests).toEqual([]);
+  await page.getByRole("button", { name: "Enable Google Cast SDK", exact: true }).click();
+  await expect(page.locator("#result")).toHaveText("Google Cast sender testing requires HTTPS.");
+  expect(sdkRequests).toEqual([]);
+});

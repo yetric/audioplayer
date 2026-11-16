@@ -27,6 +27,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Cast handoff prototype
+        run: npm run test:cast-prototype && npm run prototype:cast:build
+
       - name: Typecheck
         run: npm run check
 
