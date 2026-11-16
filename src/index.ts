@@ -340,8 +340,8 @@ const isRuntimePlayerError = (
 ): value is AudioPlayerRuntimeError =>
   !!value &&
   typeof value === "object" &&
-  "code" in value &&
-  "message" in value;
+  "code" in value && typeof value.code === "string" &&
+  "message" in value && typeof value.message === "string";
 
 const normalizePlayerError = (
   fallbackCode: AudioPlayerRuntimeError["code"],
