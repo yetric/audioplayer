@@ -7,7 +7,11 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 ## Unreleased
 
 - Adds an experimental lazy `player.destinations()` controller for native remote pickers and permitted audio outputs, with separate capability and operation results
-- Raises the core gzip budget to 7 KiB for the native destination prototype (6884 bytes measured); no vendor SDK or server dependency
+- Raises the core gzip budget to 7 KiB for the native destination prototype (7151 bytes measured); no vendor SDK or server dependency
+
+- Separates remote picker completion (`prompted`) from applied sinks (`applied`), exposes pending operations and unknown native receiver command support
+- Invalidates pending selection after source replacement, reload, queue transitions and unload; observes permitted output device removal without silently changing routes
+- Adds keyboard-accessible demo controls, lifecycle and React StrictMode coverage, a typechecked binding example, hardware validation procedure and provider feasibility decisions
 
 ## 1.3.1 - 2026-11-16
 

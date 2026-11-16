@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { StrictMode, act } from "react";
+import { StrictMode, act, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -205,6 +205,40 @@ describe("react adapter", () => {
     });
 
     expect(destroy).toHaveBeenCalledTimes(1);
+    root = createRoot(container);
+  });
+
+  it("keeps destination subscriptions usable across StrictMode replay and closes pending selection on real unmount", async () => {
+    let resolve!: (device: { deviceId: string }) => void;
+    vi.stubGlobal("navigator", { mediaDevices: {
+      selectAudioOutput: () => new Promise((done) => { resolve = done; }),
+    } });
+    const changes = vi.fn();
+    const detach = vi.fn();
+    const Output = () => {
+      const player = useAudioPlayer();
+      captured.player = player;
+      useEffect(() => {
+        const unsubscribe = player.destinations().subscribe(changes);
+        return () => { unsubscribe(); detach(); };
+      }, [player]);
+      return null;
+    };
+    render(<StrictMode><AudioPlayerProvider><Output /></AudioPlayerProvider></StrictMode>);
+    await act(async () => {});
+    expect(detach).toHaveBeenCalledTimes(1);
+    const audio = FakeAudio.instances.at(-1) as FakeAudio & { setSinkId: ReturnType<typeof vi.fn> };
+    audio.setSinkId = vi.fn(async () => {});
+    const route = captured.player!.destinations();
+    expect((await route.setOutput("")).status).toBe("applied");
+    const pending = route.selectOutput();
+    await act(async () => { root.unmount(); });
+    expect(detach).toHaveBeenCalledTimes(2);
+    const count = changes.mock.calls.length;
+    resolve({ deviceId: "speaker" });
+    expect((await pending).status).toBe("destroyed");
+    expect(audio.setSinkId).toHaveBeenCalledTimes(1);
+    expect(changes).toHaveBeenCalledTimes(count);
     root = createRoot(container);
   });
 

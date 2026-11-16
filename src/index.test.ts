@@ -176,7 +176,7 @@ describe("createAudioPlayer", () => {
     const snapshot = cues.getSnapshot();
     const route = player.destinations();
     expect(player.destinations()).toBe(route);
-    expect(await route.setOutput("speaker")).toEqual({ status: "requested" });
+    expect(await route.setOutput("speaker")).toEqual({ status: "applied", sinkId: "" });
     audio.setSinkId.mockRejectedValue(new Error("removed"));
     expect((await route.setOutput("removed")).status).toBe("failed");
     expect(player.getState()).toEqual(before);
@@ -190,6 +190,80 @@ describe("createAudioPlayer", () => {
     player.destroy();
     expect((await route.setOutput("")).status).toBe("destroyed");
   });
+
+  it.each(["load", "same source", "unload", "empty queue", "next"])(
+    "does not apply a late output selection after %s", async (action) => {
+      let resolve!: (device: { deviceId: string }) => void;
+      vi.stubGlobal("navigator", { mediaDevices: {
+        selectAudioOutput: () => new Promise((done) => { resolve = done; }),
+      } });
+      const player = createAudioPlayer();
+      await player.setQueue([episodeOne, episodeTwo]);
+      await player.play();
+      const audio = MockAudio.instances[0] as MockAudio & { setSinkId: ReturnType<typeof vi.fn> };
+      audio.setSinkId = vi.fn(async () => {});
+      const route = player.destinations();
+      const pending = route.selectOutput();
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "same source") await player.load(episodeOne);
+      if (action === "unload") player.unload();
+      if (action === "empty queue") await player.setQueue([]);
+      if (action === "next") await player.next();
+      const current = player.getState();
+      resolve({ deviceId: "old-choice" });
+      expect(await pending).toEqual({ status: "superseded" });
+      expect(audio.setSinkId).not.toHaveBeenCalled();
+      expect(player.getState()).toEqual(current);
+      player.destroy();
+    },
+  );
+
+  it("does not override a pause made while output selection is pending", async () => {
+    let resolve!: (device: { deviceId: string }) => void;
+    vi.stubGlobal("navigator", { mediaDevices: {
+      selectAudioOutput: () => new Promise((done) => { resolve = done; }),
+    } });
+    const player = createAudioPlayer();
+    await player.play(episodeOne);
+    const audio = MockAudio.instances[0] as MockAudio & { setSinkId: ReturnType<typeof vi.fn> };
+    audio.setSinkId = vi.fn(async () => {});
+    const pending = player.destinations().selectOutput();
+    player.pause();
+    resolve({ deviceId: "speaker" });
+    expect((await pending).status).toBe("applied");
+    expect(player.getState().status).toBe("paused");
+    player.destroy();
+  });
+
+  it.each(["pause", "load", "unload", "destroy"])(
+    "ignores late native connection completion after %s without changing playback", async (action) => {
+      let finish!: () => void;
+      const player = createAudioPlayer();
+      await player.play(episodeOne);
+      const remote = Object.assign(new EventTarget(), {
+        state: "disconnected",
+        prompt: () => new Promise<void>((resolve) => { finish = resolve; }),
+      });
+      Object.assign(MockAudio.instances[0], { remote });
+      const route = player.destinations();
+      const pending = route.promptRemote();
+      if (action === "pause") player.pause();
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "unload") player.unload();
+      if (action === "destroy") player.destroy();
+      const before = player.getState();
+      remote.state = "connected";
+      remote.dispatchEvent(new Event("connect"));
+      finish();
+      expect((await pending).status).toBe(action === "destroy" ? "destroyed"
+        : action === "pause" ? "prompted" : "superseded");
+      expect(player.getState()).toEqual(before);
+      remote.state = "disconnected";
+      remote.dispatchEvent(new Event("disconnect"));
+      expect(player.getState()).toEqual(before);
+      player.destroy();
+    },
+  );
 
   it("loads a source and reaches ready state", async () => {
     const player = createAudioPlayer();

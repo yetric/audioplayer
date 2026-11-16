@@ -15,7 +15,13 @@ test("ESM and CommonJS exports load without browser globals", async () => {
     assert.equal(player.getState().status, "idle");
     await player.load({ id: "server", src: "https://example.com/audio.wav" });
     assert.equal(player.getState().error.code, "UNSUPPORTED_ENVIRONMENT");
+    const destinations = player.destinations();
+    assert.equal(destinations.getState().remote.picker, null);
+    assert.equal(destinations.getState().output.canSelect, false);
+    assert.equal((await destinations.promptRemote()).status, "unsupported");
+    assert.equal((await destinations.setOutput("")).status, "unsupported");
     player.destroy();
+    assert.equal((await destinations.selectOutput()).status, "destroyed");
   }
   assert.equal(typeof require("@yetric/audioplayer/react").AudioPlayerProvider, "function");
 });

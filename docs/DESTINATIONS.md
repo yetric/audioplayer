@@ -1,6 +1,11 @@
+---
+id: destinations
+slug: /destinations
+---
+
 # Native destination prototype (unreleased 1.4)
 
-Experimental API for review, based on 1.3.1. No physical receiver or output-device validation has been performed. Automated fakes establish control flow, not AirPlay support. Cast, Spotify Connect and silence skipping are unimplemented. This increment does not satisfy the complete M0/M1 release gates.
+Experimental API for review, based on 1.3.1. No physical receiver or output-device validation has been performed; the user confirmed no hardware is currently available. Automated fakes establish control flow, not AirPlay support. Cast, Spotify Connect and silence skipping are unimplemented. This increment does not satisfy the complete M0/M1 release gates.
 
 ```ts
 const destinations = player.destinations();
@@ -15,6 +20,8 @@ unsubscribe();
 player.destroy();
 ```
 
+A complete, typechecked binding with pending-state handling, result reporting and cleanup is in [examples/destinations/controls.ts](../examples/destinations/controls.ts). Run `npm run demo:start` for keyboard-accessible native controls alongside the chapter cards.
+
 The controller is created lazily and cached per player. No prompts run on attachment. `player.destroy()` destroys it; destroying the controller permanently disables that player's destination controls. Destruction removes listeners and cancels availability monitoring, including late registrations. It does not disconnect a receiver or change the output. No media element is exposed.
 
 ## Contract
@@ -23,13 +30,17 @@ The controller is created lazily and cached per player. No prompts run on attach
 
 - `remote.picker`: `standard`, `webkit`, or `null`. Standard `prompt()` takes priority. This is a generic native remote picker, not a claim that the protocol is AirPlay.
 - `remote.availability`: `unknown`, `available`, or `unavailable`. Standard monitoring may fail even when the picker works. Unknown or unavailable availability never disables a picker. WebKit availability remains unknown in this prototype.
+- `remote.commands`: seek, rate and volume are each `unknown`. Neither standard Remote Playback nor the WebKit boolean exposes per-command receiver support. Existing player commands still target the element; a property update is not a receiver acknowledgment.
+- `remote.returnToLocal`: `picker` when the native picker exists, otherwise `system`. This does not expose a programmatic disconnect operation.
+- `pending`: `remote`, `output`, or `null`, delivered before picker invocation and after settlement. Disable overlapping controls while pending.
 - `remote.connection`: observed `disconnected`, `connecting`, or `connected`. WebKit exposes only a wireless boolean, so connecting cannot be inferred there. Picker completion alone never marks a connection confirmed.
 - `output.canSelect`: both `selectAudioOutput()` and element `setSinkId()` exist. `canSetSink`: `setSinkId()` exists independently. These capabilities do not imply permission or device availability.
+- `output.availability`: `unknown` until an explicitly selected sink is observed in permitted enumeration, then `available` or `unavailable`. Device changes refresh this observation without requesting microphone access or selecting a replacement. A default sink or rejected enumeration remains unknown. This reports device presence, not audibility.
 - `output.sinkId`: current element sink, or the empty default ID. Device names and IDs are not persisted or enumerated by the library.
 
-`promptRemote()`, `selectOutput()`, and `setOutput(deviceId)` return `DestinationResult`. `requested` means the browser call completed, not that hardware routing was verified. `unsupported`, `busy`, and `destroyed` are normal outcomes. `failed` retains the original `cause`, including its platform error name. Cancellation and permission denial may be indistinguishable. Applications must inspect results and present appropriate UI.
+`promptRemote()`, `selectOutput()`, and `setOutput(deviceId)` return `DestinationResult`. `prompted` means the remote picker request completed; observe connection separately. `applied` means the browser setter completed and includes the observed `sinkId`; this does not verify audible hardware routing. `unsupported`, `busy`, `destroyed`, and `superseded` are normal outcomes. `failed` retains the original `cause`, including its platform error name. Cancellation and permission denial may be indistinguishable. Applications must inspect results and present appropriate UI.
 
-Only one operation runs at a time. Picker invocation occurs before any await; call directly in a user action. Output selection awaits permission before setting the chosen sink. Destruction during selection prevents the subsequent sink call. Already issued browser operations cannot be canceled. A pending native output choice applies to the element, including a replacement source, rather than loading or restoring an old source. No source URL, position, queue, playing intent, rate or volume is written by routing code.
+Only one operation runs at a time. Picker invocation occurs before any await; call directly in a user action. Output selection awaits permission before setting the chosen sink. Destruction during selection prevents the subsequent sink call. Already issued browser operations cannot be canceled. A source replacement, same-source reload, queue transition or unload invalidates pending operations. A delayed output picker then returns `superseded` and does not call the sink setter. An already issued native prompt or sink setter cannot be undone; late results return `superseded` without restoring old content or triggering playback. Pause/seek/rate changes do not invalidate a choice and their current intent is preserved. No source URL, position, queue, playing intent, rate or volume is written by routing code.
 
 `setOutput(id)` accepts an already permitted sink. `setOutput("")` explicitly requests the default system output. It is not a remote disconnect command. Remote return-to-local selection uses the native picker/system controls; there is no portable programmatic disconnect API. A rejected picker never automatically opens another picker or starts another output. Standard availability failure falls back to unknown; missing standard prompt falls back to the WebKit picker.
 
@@ -51,8 +62,8 @@ No microphone permission, Bluetooth pairing, provider SDK, or backend is require
 
 ## Evidence and remaining gates
 
-Unit tests cover absent/partial methods, failed monitoring, synchronous picker activation, standard/WebKit choice, rejected prompts, sink failures, concurrent operations and late cleanup. Browser tests exercise routing on real media elements with controlled API fakes in Chromium, Firefox and WebKit. Record installed browser versions with `npx playwright --version` and the Playwright installation metadata when reproducing results. Validation on 2026-11-16: 128 unit tests passed; all 24 Chromium 159.0.8154.6 and Firefox 159.0 browser cases passed. WebKit 27.2 (revision 2388) could not launch because this Linux environment lacks `libicudata.so.74`; all 12 WebKit cases remain locally unverified. These are automated engines, not hardware evidence.
+Unit tests cover absent/partial methods, failed monitoring, synchronous picker activation, standard/WebKit choice, rejected prompts, sink failures, concurrent operations and late cleanup. Browser tests exercise routing on real media elements with controlled API fakes in Chromium, Firefox and WebKit. Record installed browser versions with `npx playwright --version` and the Playwright installation metadata when reproducing results. The original prototype passed all 36 browser cases and the React 18 job in [CI run 43924139691](https://github.com/yetric/audioplayer/actions/runs/43924139691). Follow-up local validation on 2026-11-16: 148 unit tests pass, including native lifecycle and destination subscription replay under StrictMode; all 32 Chromium 159.0.8154.6 and Firefox 159.0 browser cases passed, including pending, failure, removal, explicit recovery, same-source reload and keyboard demo scenarios. Locally, WebKit 27.2 (revision 2388) could not launch because this Linux environment lacks `libicudata.so.74`; WebKit cases remain locally unverified. These are automated engines, not hardware evidence.
 
-Before beta: test actual Safari/AirPlay and default/permitted output routing, paused and playing transitions, queue boundaries, source replacement, disconnect, background/mobile behavior and failed device connections. Record exact browser/OS/receiver versions and source accessibility. Add accessible demo controls and complete the Cast handoff investigation, backend inventory and separate Spotify feasibility note required by the release plan. Public-media Cast needs no new service; protected media must ship its resolver/reference service and any required receiver together, per the backend design.
+Before beta: follow the [hardware validation procedure](./DESTINATION_VALIDATION.md) to test actual Safari/AirPlay and default/permitted output routing, paused and playing transitions, queue boundaries, source replacement, disconnect, background/mobile behavior and failed device connections. Record exact browser/OS/receiver versions and source accessibility. The accessible demo and its fake-API browser coverage are implemented. The [Cast architecture review and backend inventory](./DESIGN_CAST_HANDOFF.md) defer SDK implementation pending an internal transport prototype; the [Spotify feasibility note](./SPOTIFY_CONNECT_FEASIBILITY.md) recommends deferral. Public-media Cast needs no new service; protected media must ship its resolver/reference service and any required receiver together, per the backend design.
 
-The prototype uses the existing root export with lazy controller attachment and no new dependencies. Measured core bundle: 6,884 bytes gzip; proposed budget 7 KiB. No version bump or feature release is included. Optional Cast packaging remains undecided pending handoff evidence.
+The prototype uses the existing root export with lazy controller attachment and no new dependencies. Measured core bundle: 7,151 bytes gzip; proposed budget 7 KiB. No version bump or feature release is included. Optional Cast packaging remains undecided pending handoff evidence.

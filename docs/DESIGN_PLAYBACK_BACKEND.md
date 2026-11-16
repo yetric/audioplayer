@@ -1,6 +1,6 @@
 # Design Note: Playback Backend Support
 
-Status: proposed companion work for [1.4 playback destinations](./RELEASE_1_4.md). No service or endpoints are implemented. Contract names and routes below are provisional.
+Status: proposed companion work for [1.4 playback destinations](./RELEASE_1_4.md). Native controls are implemented without a service. No service or endpoints are implemented. The [Cast architecture review](./DESIGN_CAST_HANDOFF.md) records the selected public/protected cases, draft resolver v1 and conditional packaging; contract names and routes remain provisional.
 
 ## Goal and ownership
 

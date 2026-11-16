@@ -22,6 +22,10 @@ CI installs the browser revisions pinned by the locked Playwright version. Older
 
 Audio codec support and autoplay rules come from the browser. Start playback from a user action and show `state.error` if it fails. Media Session is optional and falls back to a no-op where unsupported. Persistence needs browser storage; applications in restricted storage environments can supply their own adapter.
 
+## Unreleased 1.4 destinations
+
+Native destination controls are experimental. Runtime checks are per operation; method presence does not establish permission, device availability or receiver command support. The demo includes pickers where available and system-settings guidance otherwise. See the [destination contract](./DESTINATIONS.md) and [hardware validation record](./DESTINATION_VALIDATION.md). No physical receiver is currently available for validation; no AirPlay or output-device hardware support is claimed. Cast and Spotify Connect remain unimplemented.
+
 ## Node and build tools
 
 Playback runs in the browser and does not require Node on an end user's device. The package metadata retains `node >=22` for compatibility with the existing package policy. Building this repository requires Node 22.18+, Node 24.11+, or a newer supported Node release because of its development tools. CI validates Node 22 and publishes with Node 24.
@@ -30,4 +34,4 @@ Importing the package and creating a player on a server are supported. Playback 
 
 ## Bundle budget
 
-`npm run check:size` bundles and minifies each public entry point and measures gzip bytes, excluding React and its JSX runtime. The core budget is 6.25 KiB and the React entry point budget is 8 KiB, including the core. The core allowance increased by 256 bytes in 1.3.1 for Media Session update tracking; the measured increase is 108 gzip bytes. These are CI regression limits, not the size of every consumer's application bundle.
+`npm run check:size` bundles and minifies each public entry point and measures gzip bytes, excluding React and its JSX runtime. The unreleased 1.4 core budget is 7 KiB (7,151 gzip bytes measured for the native destination prototype); stable 1.3.1 uses 6.25 KiB. The React entry point budget remains 8 KiB, including the core. The core allowance increased by 256 bytes in 1.3.1 for Media Session update tracking; the measured increase is 108 gzip bytes. These are CI regression limits, not the size of every consumer's application bundle.

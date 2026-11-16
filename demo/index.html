@@ -58,6 +58,11 @@
         cursor: pointer;
       }
 
+      button:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+
       button.secondary,
       select.secondary {
         background: #ffffff;
@@ -118,6 +123,19 @@
             <option value="2">2x</option>
           </select>
         </div>
+      </section>
+
+      <section aria-labelledby="destinations-heading">
+        <h2 id="destinations-heading">Audio output (experimental)</h2>
+        <p id="destination-help">Use a native picker when available, or choose your output in system settings. Hardware support is not yet verified.</p>
+        <div class="controls" aria-describedby="destination-help">
+          <button id="remote-output" disabled>Choose remote output</button>
+          <button id="audio-output" disabled>Choose audio output</button>
+          <button id="default-output" class="secondary" disabled>Use system default output</button>
+        </div>
+        <p id="destination-state" role="status"></p>
+        <p id="destination-result" role="status" aria-live="polite"></p>
+        <p>To stop remote playback, choose this device in the native picker or system controls. System default output does not disconnect AirPlay.</p>
       </section>
 
       <section>

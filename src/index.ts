@@ -1,5 +1,5 @@
 import { createDestinationsController, type AudioPlayerDestinationsController } from "./destinations.js";
-export type { AudioPlayerDestinationsController, AudioPlayerDestinationState, DestinationResult } from "./destinations.js";
+export type { AudioPlayerDestinationsController, AudioPlayerDestinationState, DestinationAvailability, DestinationResult } from "./destinations.js";
 
 export type PlayerStatus =
   | "idle"
@@ -681,6 +681,7 @@ export const createAudioPlayer = (
   let shouldAutoplayAfterLoad = false;
   let suppressPauseEvent = false;
   let playRevision = 0;
+  let sourceRevision = 0;
 
   const audio = createAudioElement();
   const engine = createHtmlAudioEngine(audio);
@@ -839,6 +840,7 @@ export const createAudioPlayer = (
     source: AudioSource | null,
     nextStatus: PlayerStatus,
   ): AudioPlayerState => {
+    sourceRevision++;
     const queueIndex = findQueueIndexById(source?.id);
     const nextState = setState((currentState) => ({
       ...currentState,
@@ -1066,7 +1068,7 @@ export const createAudioPlayer = (
 
   return {
     destinations() {
-      destinations ??= createDestinationsController(audio);
+      destinations ??= createDestinationsController(destroyed ? null : audio, () => sourceRevision);
       if (destroyed) destinations.destroy();
       return destinations;
     },
@@ -1268,6 +1270,7 @@ export const createAudioPlayer = (
           );
         }
 
+        sourceRevision++;
         const nextState = setState((currentState) => ({
           ...currentState,
           currentSource: startIndex >= 0 ? items[startIndex] ?? null : null,

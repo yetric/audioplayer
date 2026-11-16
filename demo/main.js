@@ -136,3 +136,42 @@ rateEl?.addEventListener("change", (event) => {
   const nextRate = Number(event.target.value);
   player.setRate(nextRate);
 });
+
+const destinations = player.destinations();
+const remoteButton = document.querySelector("#remote-output");
+const outputButton = document.querySelector("#audio-output");
+const defaultButton = document.querySelector("#default-output");
+const destinationState = document.querySelector("#destination-state");
+const destinationResult = document.querySelector("#destination-result");
+destinations.subscribe(({ remote, output, pending }) => {
+  remoteButton.disabled = pending !== null || remote.picker === null;
+  outputButton.disabled = pending !== null || !output.canSelect;
+  defaultButton.disabled = pending !== null || !output.canSetSink;
+  rateEl.disabled = remote.connection !== "disconnected";
+  destinationState.textContent = pending ? "Waiting for output selection..." : [
+    remote.picker ? `Remote output: ${remote.connection}; availability ${remote.availability}.`
+      : "Remote picker unavailable. Use system controls.",
+    output.canSelect ? `Audio output picker available; device availability ${output.availability}.`
+      : "Audio output picker unavailable. Use system settings.",
+    output.availability === "unavailable" ? "Selected device is unavailable. Choose another output or explicitly use system default." : "",
+    remote.connection !== "disconnected" ? "Remote seek, rate and volume support is unknown. Use receiver controls if needed." : "",
+  ].filter(Boolean).join(" ");
+});
+const showDestinationResult = (result) => {
+  const messages = {
+    prompted: "Picker request completed. Connection status is reported separately.",
+    applied: "The browser applied the audio output selection.",
+    unsupported: "Output selection is unavailable. Use system settings.",
+    busy: "An output selection is already pending.",
+    destroyed: "Output controls have been closed.",
+    superseded: "The source changed. Choose an output again.",
+    failed: `Output selection failed (${result.cause?.name ?? "Error"}). It may have been canceled or denied. Use the picker to retry or use system settings.`,
+  };
+  destinationResult.textContent = messages[result.status];
+};
+remoteButton.onclick = () => { void destinations.promptRemote().then(showDestinationResult); };
+outputButton.onclick = () => { void destinations.selectOutput().then(showDestinationResult); };
+defaultButton.onclick = () => { void destinations.setOutput("").then(showDestinationResult); };
+window.addEventListener("pagehide", (event) => {
+  if (!event.persisted) player.destroy();
+});
