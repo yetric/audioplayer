@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101e22" />
+    <meta name="description" content="An original fictional audio story with a world you can explore, one piece at a time." />
+    <title>The Last Signal - An interactive audio story</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#story">Skip to the story</a>
+    <header class="site-header">
+      <a class="wordmark" href="../">AUDIOPLAYER <span>/ LISTENING LAB</span></a>
+      <span class="edition">EXPERIMENT 001</span>
+    </header>
+    <main id="story">
+      <section class="hero" aria-labelledby="series-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="signal-dot"></span> AN ORIGINAL FICTIONAL SERIES</p>
+          <h1 id="series-title">The Last<br /><em>Signal.</em></h1>
+          <p class="dek">A parcel. A closed radio station.<br />A message that was never meant to be a mystery.</p>
+          <p class="invitation">Listen to the story. Follow your curiosity.<br />Discover only what belongs to this moment.</p>
+          <div class="hero-actions">
+            <button class="primary" id="begin" disabled>Listen to part one <span aria-hidden="true">&#9654;</span></button>
+            <a class="text-link" href="#companion">Explore the listening room <span aria-hidden="true">&#8595;</span></a>
+          </div>
+          <p class="production-note">Two short episodes. Original fiction. Synthetic demo narration.</p>
+        </div>
+        <figure class="cover">
+          <img src="./assets/north-point.svg" width="640" height="720" alt="A small amber light in a dark radio station above a quiet harbour." />
+          <figcaption><span>BELLWETHER ARCHIVE</span><span>FIELD RECORDING / 01</span></figcaption>
+        </figure>
+      </section>
+
+      <section class="listening-room" id="companion" aria-labelledby="room-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">THE LISTENING ROOM</p><h2 id="room-title">There is more to the story.</h2></div>
+          <label class="mode-switch"><input id="context-enabled" type="checkbox" checked /> Show story context</label>
+        </div>
+        <div class="room-grid">
+          <aside class="episode-list" aria-label="Episodes">
+            <p class="eyebrow">TWO PARTS. ONE STORY.</p>
+            <button class="episode active" data-episode="0" aria-current="true"><span class="episode-number">01</span><span><strong>The parcel</strong><small>Some things arrive forty years late.</small><span class="episode-duration" id="duration-0"></span></span></button>
+            <button class="episode" data-episode="1" aria-current="false"><span class="episode-number">02</span><span><strong>The window</strong><small>An ordinary kindness leaves a trace.</small><span class="episode-duration" id="duration-1"></span></span></button>
+            <div class="room-note"><span class="small-rule"></span><h3>One piece at a time.</h3><p>Context follows your current place in the series. Seeking forward reveals more; going back restores that earlier perspective.</p><p>Open a detail to pause and explore. Return when you are ready.</p></div>
+          </aside>
+          <div class="story-panel">
+            <div class="panel-top"><span class="eyebrow" id="episode-label">PART 01 / THE PARCEL</span><span class="status" id="status" role="status">Loading audio</span></div>
+            <div id="context-content">
+              <div class="passage-heading"><span class="eyebrow">IN THIS MOMENT</span><h3 id="passage-title">Opening the archive...</h3></div>
+              <p id="passage-text" class="passage-text"></p>
+              <div class="context-heading"><h4>Follow your curiosity</h4><span>Only what the story has revealed</span></div>
+              <div id="context-cards" class="context-cards"></div>
+              <section id="curiosity" class="curiosity" hidden aria-labelledby="question-title">
+                <div><p class="eyebrow">A QUESTION TO KEEP</p><h4 id="question-title">Why are there two bells?</h4><p id="question-status">Keep this question with you as the story unfolds.</p></div>
+                <button id="save-question" class="secondary">Save my question</button>
+                <button id="read-answer" class="secondary" hidden>Explore the answer</button>
+              </section>
+              <details class="transcript"><summary>Read the story so far</summary><p class="transcript-note">Select a passage to return to it. Later passages appear as you reach them.</p><div id="transcript"></div></details>
+            </div>
+            <div id="audio-only" class="audio-only" hidden><span class="orbit" aria-hidden="true"></span><h3>Just you and the story.</h3><p>The full narrative is in the audio.<br />Turn context back on whenever curiosity calls.</p></div>
+            <div class="episode-end" id="episode-end" hidden><p id="end-message"></p><button class="secondary" id="continue">Continue to part two</button></div>
+            <p id="error" role="alert" hidden></p>
+          </div>
+        </div>
+      </section>
+      <footer><p>A fictional world. A working listening experiment.</p><p>All people, places, and documents are invented. Questions are saved for this visit only.</p><a href="../">Back to the library demo</a></footer>
+    </main>
+
+    <section class="player-dock" aria-label="Audio controls">
+      <div class="dock-inner">
+        <div class="now-playing"><img src="./assets/north-point.svg" width="44" height="50" alt="" /><div><span>THE LAST SIGNAL</span><strong id="now-playing">01. The parcel</strong></div></div>
+        <div class="transport"><button id="back" class="round" aria-label="Back 10 seconds" disabled>-10</button><button id="play" class="play-button" aria-label="Play" disabled><span aria-hidden="true">&#9654;</span></button><button id="forward" class="round" aria-label="Forward 10 seconds" disabled>+10</button></div>
+        <div class="timeline"><label for="seek" class="sr-only">Playback position</label><input id="seek" type="range" min="0" max="1" step="0.1" value="0" disabled /><div class="times"><output id="elapsed">0:00</output><span id="total">0:00</span></div></div>
+        <label class="speed-label"><span class="sr-only">Playback speed</span><select id="speed"><option value="1">1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option></select></label>
+      </div>
+    </section>
+
+    <dialog id="detail-dialog" aria-labelledby="detail-title">
+      <div class="detail-top"><span class="eyebrow" id="detail-kind">FROM THE ARCHIVE</span><button id="close-detail" aria-label="Close detail and return to story">Close</button></div>
+      <div id="detail-art"></div><h2 id="detail-title"></h2><p id="detail-body"></p>
+      <p class="detail-caption">Fictional companion material. Available at your current story position.</p>
+      <button class="primary" id="return">Return to the story</button><p class="return-note" id="return-note"></p>
+    </dialog>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

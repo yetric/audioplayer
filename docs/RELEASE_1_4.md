@@ -1,6 +1,6 @@
 # 1.4: Playback Destinations and Multimedia
 
-Status: proposed, based on published `1.3.0-beta.1`. No 1.4 runtime work is implemented. Additive only; API names and packaging require a design review before implementation.
+Status: proposed, based on stable `1.3.0`. No 1.4 runtime work is implemented. Additive only; API names and packaging require a design review before implementation.
 
 ## Goal
 
@@ -31,19 +31,19 @@ MDN currently marks Remote Playback as limited availability and `selectAudioOutp
 
 ## Starting point: 1.3
 
-`1.3.0-beta.1` provides generic range cues, indexed active snapshots, enter/exit events, metadata refresh, a parsed Podcasting 2.0 JSON Chapters adapter, and `useAudioPlayerCues(controller)`. The demo uses local audio and artwork and demonstrates chapter navigation. The milestone passed 103 unit tests and 18 browser cases. See [Timed metadata](./TIMED_METADATA.md).
+`1.3.0` provides generic range cues, indexed active snapshots, enter/exit events, metadata refresh, a parsed Podcasting 2.0 JSON Chapters adapter, and `useAudioPlayerCues(controller)`. The demo uses local audio and artwork and demonstrates chapter navigation. The stable release includes the fictional storytelling demo and passed 114 unit tests and 33 browser cases. See [Timed metadata](./TIMED_METADATA.md).
 
 The current engine owns one private `HTMLAudioElement`. Public commands control that local engine, and cues subscribe to its state. There is no output picker, destination state, remote command routing, or remote position source. Adding a Cast button alone would leave two players with conflicting state.
 
-[The Hittapodd evaluation](https://github.com/yetric/podcast-app/issues/564) is open with no feedback when this plan was written. Treat its findings as input, not as a release dependency. The library must remain usable independently of any one application.
+Consumer feedback informs feature design; the library remains independently usable and no application adoption is a release dependency.
 
 ## Before starting 1.4
 
-1. Triage beta feedback and fix reproducible 1.3 defects before adding destination behavior. Changes to experimental APIs should settle before promoting 1.3 stable.
+1. Triage feedback and fix reproducible 1.3 defects in patch releases before adding destination behavior. The 1.3 public API is stable.
 2. Address [Media Session issue #35](https://github.com/yetric/audioplayer/issues/35) in the 1.3 release line: metadata is currently replaced on every state notification. Test assignment frequency and repeated artwork entries; preserve the existing public options. This fix should not wait for 1.4.
 3. Record the stable 1.3 contract and supported browser baseline. No existing source, command, status, persistence, or cue semantics may break in 1.4.
 
-External adoption is not required to promote 1.3. Fixes discovered during beta belong in the next beta or patch as appropriate.
+External adoption is not a release gate. Confirmed 1.3 defects belong in patch releases.
 
 ## Destination scope
 
@@ -67,7 +67,7 @@ Deliver an optional reference backend and an application-supplied async media re
 
 Spotify authentication is a feasibility decision: browser PKCE does not inherently need a server. If the selected Spotify integration needs server-held credentials or sessions, its OAuth and token-renewal work ships with the adapter. Backend support cannot remove provider content restrictions.
 
-Detailed ownership, proposed routes, and acceptance criteria: [Playback backend support](./DESIGN_PLAYBACK_BACKEND.md). This is optional service implementation, not a dependency on Hittapodd's backend or a commitment to operate a hosted service.
+Detailed ownership, proposed routes, and acceptance criteria: [Playback backend support](./DESIGN_PLAYBACK_BACKEND.md). This is optional service implementation, not a dependency on any particular application backend or a commitment to operate a hosted service.
 
 ## Shared playback contract
 
@@ -143,7 +143,7 @@ Do not assume the local skipper works with Cast or Spotify. Remote seeking and b
 
 ## Release gate
 
-1. Promote the 1.3 baseline independently of whether Hittapodd adopts it. Fix beta regressions before building on the contract.
+1. Use stable 1.3 as the baseline and fix confirmed regressions before building on its contract.
 2. Publish `1.4.0-beta.1` when M0 decisions and M1 implementation pass unit, browser, package, type, size, example, and docs checks, including React 18 and StrictMode compatibility.
 3. Record real-device AirPlay and system-output results, plus manual mobile/background behavior. Headless WebKit mocks do not establish AirPlay support. If hardware is unavailable, record the missing evidence and keep that destination experimental.
 4. Add Cast only in a later beta after M2 passes, including its required backend and protected-media tests; record actual receiver tests. Spotify Connect remains explicitly experimental/unimplemented unless its separate feasibility gate is met and any required authentication service is validated.

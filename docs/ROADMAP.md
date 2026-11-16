@@ -20,9 +20,9 @@ Maintain a standalone, headless browser audio library with a small public API, r
 
 ## Current milestone: 1.3 timed multimedia metadata
 
-1.2.0 is stable and 1.3.0-beta.1 is published. The beta adds an opt-in synchronization layer for consumer-supplied images, links, text, and other timed data. The library stays headless: applications own metadata production, fetching, and presentation.
+1.3.0 is stable. It adds an opt-in synchronization layer for consumer-supplied images, links, text, and other timed data. The library stays headless: applications own metadata production, fetching, and presentation.
 
-Implemented in the 1.3 beta:
+Implemented in 1.3:
 
 - Typed range cues and an observable set of active cues.
 - An opt-in adapter for Podcasting 2.0 JSON Chapters, including timed images, titles, links, and hidden metadata markers. Document how parsed timed transcripts use the same cues.
@@ -110,7 +110,7 @@ Every 1.x release is additive and ships a prerelease first. Validate changes wit
 | ------- | ----- | ------- |
 | 1.1 | Quality and publishing | Shipped. StrictMode fix, more tests, OIDC publishing |
 | 1.2 | Less glue code, shipped | [`RELEASE_1_2.md`](./RELEASE_1_2.md) |
-| 1.3 | Timed multimedia metadata, beta published | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
+| 1.3 | Timed multimedia metadata, stable | [`RELEASE_1_3.md`](./RELEASE_1_3.md), [`DESIGN_CUES.md`](./DESIGN_CUES.md) |
 | 1.4 | Playback destinations and multimedia, proposed | [`RELEASE_1_4.md`](./RELEASE_1_4.md) |
 | 2.0 | Long shots, not committed | [`RELEASE_2_0.md`](./RELEASE_2_0.md), [`DOCS_PLAN.md`](./DOCS_PLAN.md) |
 

@@ -1,0 +1,94 @@
+{
+  "id": "the-last-signal",
+  "revision": "1",
+  "title": "The Last Signal",
+  "description": "A parcel. A closed radio station. A message that was never meant to be a mystery.",
+  "episodes": [
+    {
+      "id": "the-parcel",
+      "title": "The parcel",
+      "subtitle": "Some things arrive forty years late.",
+      "passages": [
+        {
+          "id": "arrival",
+          "title": "An unexpected delivery",
+          "text": "The Last Signal. Part one. The parcel. On a Tuesday morning in November, a parcel arrived at the Bellwether town archive. No return address. Inside was a reel of tape, a folded note, and a small brass key. The tape box carried three words: North Point. Midnight. The radio station at North Point had been closed for forty years.",
+          "card": { "kind": "Object", "title": "The parcel", "summary": "A tape, a folded note, and a brass key.", "body": "Archive intake, Tuesday, 09:12. Plain wrapping. No sender. The words on the tape box are the only identifying marks. We have not opened the note yet.", "image": "parcel" }
+        },
+        {
+          "id": "mara",
+          "title": "The archivist",
+          "text": "Mara Vale had spent twelve years sorting other people's unfinished business. Photographs without names. Letters without envelopes. She knew that an archive was full of mysteries, most of them ordinary. But she recognised the handwriting on the box. Her father had written his shopping lists in the same narrow capitals. He had been the station's last engineer.",
+          "card": { "kind": "Person", "title": "Mara Vale", "summary": "Town archivist. Daughter of the station's last engineer.", "body": "Mara has worked at the Bellwether archive for twelve years. She recognises her father's handwriting on the tape box. That is a connection, not yet an explanation.", "image": "archive" }
+        },
+        {
+          "id": "headland",
+          "title": "North Point",
+          "text": "North Point stood above the harbour, a twenty minute walk from the archive. There were two buildings on the headland: the station and the old lighthouse. Below them, a footpath led to the ferry steps. As a child, Mara had watched her father cross that path every evening. She remembered the lighthouse bell. One stroke, at midnight. Always one.",
+          "card": { "kind": "Place", "title": "A walk to North Point", "summary": "The archive, the station, and the ferry steps.", "body": "An illustrative map of fictional Bellwether. The archive is in town; the station and lighthouse stand above the ferry steps. Only locations introduced in the story are shown.", "image": "map" }
+        },
+        {
+          "id": "note",
+          "title": "The folded note",
+          "text": "She unfolded the note. Keep the light on until the second bell. There was no signature. On the back, someone had drawn a little square, divided into four smaller squares. A window, perhaps. Mara turned the paper over again. Her father had repaired transmitters. He had never been responsible for the lighthouse.",
+          "card": { "kind": "Document", "title": "The folded note", "summary": "Keep the light on until the second bell.", "body": "Transcription: Keep the light on until the second bell. Reverse: a square divided into four panes. No signature or date. The meaning of the drawing has not been established.", "image": "note" }
+        },
+        {
+          "id": "bells",
+          "title": "The recording",
+          "text": "The archive still had a working tape machine. Mara threaded the reel and pressed play. First, a room breathing quietly around a microphone. Then the midnight bell. She waited. Eleven seconds later, another bell sounded. Lower. Closer. A man's voice said, all right, you can turn it off now. It was her father's voice. But who was he talking to?",
+          "card": { "kind": "Listening note", "title": "Two different bells", "summary": "The second sounds lower and closer than the first.", "body": "The narration describes two bells eleven seconds apart. Their different sound is an observation, not proof of where the second bell came from. The tape ends with: All right, you can turn it off now.", "image": "tape" }
+        },
+        {
+          "id": "door",
+          "title": "A key that still fits",
+          "text": "That afternoon, Mara walked to North Point. The brass key fitted the station's side door. Inside, the transmitter was gone. The desk was gone. But beside an upstairs window was a lamp, its shade patched with blue cloth. Mara stood in the doorway for a long time. She remembered that lamp from home. End of part one.",
+          "card": { "kind": "Object", "title": "The blue lamp", "summary": "A familiar lamp beside the station's upstairs window.", "body": "Mara recognises a lamp from her childhood home. It stands beside an upstairs window at the radio station. Its purpose there remains unexplained.", "image": "lamp" }
+        }
+      ]
+    },
+    {
+      "id": "the-window",
+      "title": "The window",
+      "subtitle": "An ordinary kindness can leave an extraordinary trace.",
+      "passages": [
+        {
+          "id": "return",
+          "title": "Back at the archive",
+          "text": "The Last Signal. Part two. The window. Mara returned to the archive with a photograph of the blue lamp. She had a recording of two bells and a note about a light. She wanted them to explain one another. But wanting a pattern, she reminded herself, was not the same as finding one.",
+          "card": { "kind": "Case note", "title": "What we know", "summary": "A lamp, a note, and a recording of two bells.", "body": "The lamp belonged to Mara's family. The note asks someone to leave a light on. The recording contains her father's voice. Their relationship is still an open question.", "image": "lamp" }
+        },
+        {
+          "id": "ledger",
+          "title": "A different kind of record",
+          "text": "She searched the station's engineering files. Nothing. Then she tried the harbour records. In a ferry ledger from the station's final winter, she found a handwritten amendment. Night crossing: arrival bell to be rung by hand. Shore indicator to remain lit until landing confirmed. The amendment was signed by Ada Vale. Mara's mother.",
+          "card": { "kind": "Document", "title": "The ferry ledger", "summary": "A night crossing, a hand bell, and a shore light.", "body": "Ferry ledger, final winter: Night crossing: arrival bell to be rung by hand. Shore indicator to remain lit until landing confirmed. Signed: Ada Vale. This is the first record connecting a light to the ferry's arrival.", "image": "ledger" }
+        },
+        {
+          "id": "ada",
+          "title": "The last crossing",
+          "text": "Her mother had worked the late shift across the harbour. Mara knew that. What she did not know was that the ferry's landing light had failed that winter. From the steps, the station's upstairs window was easy to see. Every night, her father put their blue lamp in that window. The lighthouse rang midnight. When the ferry reached shore, the ferryman rang his hand bell.",
+          "card": { "kind": "Connection", "title": "A light to come home to", "summary": "The upstairs window marked the landing for the late ferry.", "body": "The lighthouse bell marked midnight. The lower, closer bell came from the ferry after landing. Mara's father kept the blue lamp in the window until the passengers were safely ashore. The note describes that routine.", "image": "lamp" }
+        },
+        {
+          "id": "answer",
+          "title": "The second bell",
+          "text": "Keep the light on until the second bell. Not a code. Not a warning. A small arrangement between people making sure that other people got home. On the recording, her father was speaking to whoever would take his place the following week. All right, you can turn it off now. The mystery had become smaller. Somehow, the story had become larger.",
+          "card": { "kind": "Resolution", "title": "A small arrangement", "summary": "The second bell meant the passengers were safely ashore.", "body": "The recording preserved an ordinary handover instruction. Leave the lamp on until the ferry rings its arrival bell. The light helped people find their way home, including Mara's mother.", "image": "lamp" }
+        },
+        {
+          "id": "sender",
+          "title": "The sender",
+          "text": "Inside the tape box, beneath the cardboard spool holder, Mara found another line. Found while clearing Dad's things. Thought you should have it. Ruth, ferry cottage. Mara wrote back that evening. She did not ask for more evidence. She asked whether Ruth remembered the winter when the light at North Point stayed on a little longer.",
+          "card": { "kind": "Letter", "title": "An invitation to remember", "summary": "The parcel came from the ferryman's family.", "body": "A message beneath the spool holder identifies Ruth at the ferry cottage as the sender. Mara's reply invites a conversation. The objects have become the beginning of an oral history.", "image": "note" }
+        },
+        {
+          "id": "closing",
+          "title": "The last signal",
+          "text": "At the archive, Mara placed the note beside the photograph of the lamp. She wrote a new label. A light kept on for someone coming home. Then she left room beneath it. There would be other people who remembered. This has been The Last Signal, an original fictional story made to explore a different way of listening.",
+          "card": { "kind": "Archive", "title": "Room for another story", "summary": "A light kept on for someone coming home.", "body": "End of this fictional series. Every person, place, document, and event was invented for the demonstration. The accompanying material adds context; the complete story is in the audio.", "image": "archive" }
+        }
+      ]
+    }
+  ]
+}

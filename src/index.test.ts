@@ -462,6 +462,58 @@ describe("queue navigation", () => {
 });
 
 describe("error handling", () => {
+  it.each(["load", "unload", "destroy", "empty queue", "new play"])(
+    "ignores a pending play rejection superseded by %s", async (action) => {
+      const player = createAudioPlayer();
+      await player.load(episodeOne);
+      const audio = MockAudio.instances.at(-1)!;
+      let rejectPlay!: (reason: unknown) => void;
+      vi.spyOn(audio, "play").mockImplementationOnce(() => new Promise<void>((_, reject) => { rejectPlay = reject; }));
+      const errors = vi.fn();
+      player.on("error", errors);
+      const pending = player.play();
+      if (action === "load") await player.load(episodeTwo);
+      if (action === "unload") player.unload();
+      if (action === "destroy") player.destroy();
+      if (action === "empty queue") await player.setQueue([]);
+      if (action === "new play") await player.play();
+      const expected = player.getState();
+      rejectPlay(new DOMException("Playback interrupted", "AbortError"));
+      await pending;
+      expect(player.getState()).toEqual(expected);
+      expect(errors).not.toHaveBeenCalled();
+    },
+  );
+
+  it("still reports a rejection from the current play request", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    vi.spyOn(MockAudio.instances.at(-1)!, "play").mockRejectedValue(new DOMException("Permission denied", "NotAllowedError"));
+    await player.play();
+    expect(player.getState().status).toBe("error");
+    expect(player.getState().error?.code).toBe("PLAY_ERROR");
+  });
+
+  it("does not report a cancelled pending play as an error after pause", async () => {
+    const player = createAudioPlayer();
+    await player.load(episodeOne);
+    const audio = MockAudio.instances.at(-1)!;
+    let rejectPlay!: (reason: unknown) => void;
+    vi.spyOn(audio, "play").mockImplementation(() => {
+      audio.dispatch("play");
+      return new Promise<void>((_, reject) => { rejectPlay = reject; });
+    });
+    const errors = vi.fn();
+    player.on("error", errors);
+    const pending = player.play();
+    player.pause();
+    rejectPlay(new DOMException("Playback interrupted by pause", "AbortError"));
+    await pending;
+    expect(player.getState().status).toBe("paused");
+    expect(player.getState().error).toBeNull();
+    expect(errors).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     MockAudio.instances = [];
     MockAudio.deferLoad = false;

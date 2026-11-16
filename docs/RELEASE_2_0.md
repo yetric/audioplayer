@@ -45,6 +45,8 @@ Stop assuming one browser `HTMLAudioElement` and one player per page. Make engin
 - Build on the 1.3 cues and chapters ([`DESIGN_CUES.md`](./DESIGN_CUES.md)): transcripts as a first-class synchronized content API, with current cue in state and seek to cue.
 - Audio analysis for visual clients (waveform, spectrum) through a Web Audio engine.
 - Bookmarks and clips with start and end times.
+- Contextual storytelling: author-defined reveal boundaries, passage-linked questions, and exploration with reliable return to playback. Keep current position, listening history, and spoiler preferences distinct.
+- The neutral fictional story prototype in `demo/story/` (see its `README.md`) exercises these ideas using the existing 1.3 cue API. It adds no public library contract. Use its browser tests and documented limits as evidence before proposing a reusable session/context API or any breaking change.
 
 ### 6. Packaging and platform
 

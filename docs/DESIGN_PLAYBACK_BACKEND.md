@@ -6,7 +6,7 @@ Status: proposed companion work for [1.4 playback destinations](./RELEASE_1_4.md
 
 Deliver the server-side pieces needed to make supported playback destinations work end to end. Backend requirements become implementation tasks with examples and tests, rather than a reason to leave a feature incomplete.
 
-Keep `@yetric/audioplayer` usable as a standalone browser library. Add a small, optional TypeScript/Node reference service in a separate workspace when the first server-dependent flow is implemented. Consumers can run it independently or implement the same contract in an existing backend. Application identity, media ownership, and hosting remain explicit integration points; no Hittapodd database or account model is required.
+Keep `@yetric/audioplayer` usable as a standalone browser library. Add a small, optional TypeScript/Node reference service in a separate workspace when the first server-dependent flow is implemented. Consumers can run it independently or implement the same contract in an existing backend. Application identity, media ownership, and hosting remain explicit integration points; no application-specific database or account model is required.
 
 The browser core accepts application-supplied async callbacks for resolving destination media and obtaining provider credentials. It does not embed server URLs, user sessions, secrets, or a mandatory service dependency. Node/server dependencies must not enter the browser bundle.
 

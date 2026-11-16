@@ -680,6 +680,7 @@ export const createAudioPlayer = (
   let destroyed = false;
   let shouldAutoplayAfterLoad = false;
   let suppressPauseEvent = false;
+  let playRevision = 0;
 
   const engine = createHtmlAudioEngine();
   const subscribers = new Set<(nextState: AudioPlayerState) => void>();
@@ -890,6 +891,7 @@ export const createAudioPlayer = (
     source: AudioSource,
     autoplayAfterLoad: boolean,
   ): void => {
+    playRevision++;
     shouldAutoplayAfterLoad = autoplayAfterLoad;
     suppressPauseEvent = true;
     try {
@@ -930,9 +932,11 @@ export const createAudioPlayer = (
   };
 
   const playLoadedAudio = async (): Promise<void> => {
+    const revision = ++playRevision;
     try {
       await engine.play();
     } catch (cause) {
+      if (destroyed || revision !== playRevision) return;
       setError(createPlayerError("PLAY_ERROR", "Failed to start playback.", cause));
     }
   };
@@ -1119,6 +1123,7 @@ export const createAudioPlayer = (
     },
 
     pause() {
+      playRevision++;
       if (!engine.available) {
         return;
       }
@@ -1137,6 +1142,7 @@ export const createAudioPlayer = (
     },
 
     unload() {
+      playRevision++;
       shouldAutoplayAfterLoad = false;
 
       if (engine.available) {
@@ -1294,6 +1300,7 @@ export const createAudioPlayer = (
           const syncedState = setQueueState(items, startIndex);
           emitQueueChange(syncedState);
         } else if (engine.available) {
+          playRevision++;
           shouldAutoplayAfterLoad = false;
           suppressPauseEvent = true;
           engine.pause();

@@ -1,0 +1,29 @@
+{
+  "version": "1.2.0",
+  "chapters": [
+    {
+      "startTime": 0.0,
+      "title": "An unexpected delivery"
+    },
+    {
+      "startTime": 24.991746,
+      "title": "The archivist"
+    },
+    {
+      "startTime": 49.825079,
+      "title": "North Point"
+    },
+    {
+      "startTime": 74.185941,
+      "title": "The folded note"
+    },
+    {
+      "startTime": 96.904989,
+      "title": "The recording"
+    },
+    {
+      "startTime": 123.423039,
+      "title": "A key that still fits"
+    }
+  ]
+}
