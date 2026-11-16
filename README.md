@@ -6,11 +6,11 @@ Headless TypeScript audio player for modern browsers.
 
 ## Status
 
-`1.2.0` is the current stable release.
+`1.3.0` is the current stable release.
 
 `1.2` reduces integration code with relative seeking, provider-managed plugins, state selectors, and throttled React progress.
 
-Try `1.3.0-beta.1` with `npm install @yetric/audioplayer@beta`: [timed multimedia metadata](./docs/TIMED_METADATA.md) for synchronized images, links, and text, with a Podcasting 2.0 JSON Chapters adapter and React hook. Applications supply data and rendering; the library manages active cues. Run `npm run demo:start` to try it. The new APIs are experimental during the beta and are not included in stable 1.2.
+`1.3` adds [timed multimedia metadata](./docs/TIMED_METADATA.md) for synchronized images, links, and text, with a Podcasting 2.0 JSON Chapters adapter and React hook. Applications supply data and rendering; the library manages active cues. Run `npm run demo:start` to try the chapter demo or open `/story/` for The Last Signal, a fictional storytelling example.
 
 Use it for browser audio apps that need playback and queue state without a prescribed UI. The core works with vanilla JS and any framework; React integration is included on a separate export. React Native playback is not shipped.
 

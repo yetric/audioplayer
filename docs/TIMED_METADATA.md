@@ -5,7 +5,7 @@ slug: /timed-metadata
 
 # Timed metadata
 
-Available in `1.3.0-beta.1`, not in stable 1.2. Install with `npm install @yetric/audioplayer@beta`. The new APIs are experimental during the beta. The player stays headless: your application supplies metadata, renders images and text, and handles links. The cue controller supplies the active content for the current audio position.
+Available in stable `1.3.0`. Install with `npm install @yetric/audioplayer`. The player stays headless: your application supplies metadata, renders images and text, and handles links. The cue controller supplies the active content for the current audio position.
 
 ## Generic cues
 
