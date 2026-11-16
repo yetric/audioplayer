@@ -53,7 +53,7 @@ Proposed scope statement for the README:
 | Enable Discussions and add a "use case" issue template, to collect needs from outside users | 1.3 | P1 | S |
 | Vue and Svelte recipes. The player's `subscribe` already emits the current state on subscribe and returns an unsubscribe function, so it may work directly as a Svelte store. Verify before documenting. | 1.3 | P2 | S |
 | Evaluate shuffle and A-B loop, only if collected demand supports it | 1.3 | P2 | M |
-| Tested Web Component export and Angular example | 1.4 | P2 | M |
+| Tested Web Component export and Angular example | Deferred / unscheduled; not 1.4 scope | P2 | M |
 | Governance: second maintainer or an npm organization, documented release and triage process | 2.0 planning | P2 | S |
 
 ## Working with outside contributors

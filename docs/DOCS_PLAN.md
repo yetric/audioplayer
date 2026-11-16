@@ -8,13 +8,14 @@ A developer, or their coding assistant, can find the library, get sound playing 
 
 ## Where we are
 
-Current foundation for 1.2:
+Current foundation through 1.3.0-beta.1:
 
 - GitHub Pages publishes the Docusaurus site from CI.
 - `docs/` is the single documentation source. The site reads it directly, preserving the existing primary page URLs.
 - Public API comments explain units, defaults, side effects, and edge cases where types are insufficient.
 - No generated API reference, no site search, no versioned docs.
-- Demos: a small Vite demo (`demo/`) and examples (`examples/react`, `examples/vanilla`). The demo audio is hot-linked from a third-party host.
+- Demos: a Vite chapters/cards demo (`demo/`) with local audio and artwork, plus framework examples. A hosted gallery and generated API reference are still follow-up work.
+- Timed metadata has a dedicated guide, a React subscription example, package checks, and browser coverage.
 - No `llms.txt`, and nothing in the npm package that explains usage to an assistant.
 
 ## Documentation
@@ -60,7 +61,7 @@ Candidates:
 3. **Audiobook player** with sleep timer, per-book resume and bookmarks.
 4. **Language learning:** transcript sync and A-B loop (depends on demand).
 5. **Visualizer** with waveform or spectrum (depends on the engine work in 2.0).
-6. **Offline PWA** using the source resolver from 1.4.
+6. **Output destinations** with AirPlay, system-output fallbacks, and optional Cast, following [the 1.4 plan](./RELEASE_1_4.md). An offline PWA needs a separately scheduled source-resolver design.
 7. **Starters** for React, Vue, Svelte, Angular and vanilla, each a minimal copyable project.
 8. **React Native demo**, only if the RN engine ships.
 
@@ -76,8 +77,9 @@ Quality rules:
 | Release | Work |
 | ------- | ---- |
 | 1.2 | Published site and single `docs/` source. Add JSDoc where types cannot say enough, support and stability guidance, server-rendering coverage, and runnable examples. |
-| 1.3 | Generate the API reference. Add site search. Ship the flagship chapters demo and host the demo gallery. Compile-check docs snippets in CI. |
-| 1.4 | Add `llms.txt` and `llms-full.txt`, Markdown page export, the troubleshooting section, and the first LLM evals. Add two more demos. |
+| 1.3 | Published beta: timed metadata guide, JSON Chapters adapter, React hook, and chapters/cards demo with local assets. API generation, search, gallery hosting, and compiling all docs snippets remain unscheduled. |
+| 1.4 | Destination setup and handoff recipes, dated API/support/fallback matrix, tested public-API examples, backend contracts/reference-service and receiver setup where needed, and output troubleshooting. Review current MDN media guidance before release. |
+| Separate follow-ups | Generated API reference, search, docs snippet compilation beyond destination examples, `llms.txt` / `llms-full.txt`, Markdown export, first LLM evals, and additional demo gallery work. No automatic 1.4 commitment. |
 | 2.0 | Versioned docs, the migration guide and codemod, the full demo set, evals gating the release, and a reviewed quickstart for every supported framework. |
 
 ## Success measures
